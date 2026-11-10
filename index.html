@@ -17,7 +17,7 @@ html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.35 system-u
 body{padding-bottom:calc(68px + env(safe-area-inset-bottom))}
 header{position:sticky;top:0;z-index:5;background:var(--pri);color:#fff;display:flex;align-items:center;gap:10px;padding:10px 14px;padding-top:calc(10px + env(safe-area-inset-top))}
 header .t{flex:1;min-width:0}header b{font-size:17px;letter-spacing:.3px}header small{display:block;color:#cbd5e1;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-header button{background:#ffffff22;color:#fff;border:0;border-radius:10px;padding:8px 12px;font-size:15px}
+header .pill{font-size:11px;font-weight:700;padding:4px 9px;border-radius:999px;background:#ffffff22;white-space:nowrap}header .pill.ok{background:#16a34a}header .pill.off{background:#b45309}header button{background:#ffffff22;color:#fff;border:0;border-radius:10px;padding:8px 12px;font-size:15px}
 main{max-width:720px;margin:0 auto;padding:12px}
 section{display:none}section.on{display:block}
 nav{position:fixed;bottom:0;left:0;right:0;z-index:6;background:var(--card);border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom)}
@@ -75,7 +75,7 @@ dialog::backdrop{background:#0008}
 </style>
 </head>
 <body>
-<header><div class="t"><b>FLAZ Observer</b><small id="hsub">Observasi Cycle Time</small></div><button id="menuBtn">☰ Sesi</button></header>
+<header><div class="t"><b>FLAZ Observer</b><small id="hsub">Observasi Cycle Time</small></div><span class="pill" id="offl"></span><button id="menuBtn">☰ Sesi</button></header>
 <main>
 <section id="v-setup"></section>
 <section id="v-obs"></section>
@@ -492,7 +492,9 @@ function openMenu(){
   d.innerHTML=`<h3 style="margin:0 0 8px">Sesi Observasi</h3>
   <div style="max-height:50vh;overflow:auto">${list.map(x=>`<div class="logrow" data-sw="${x.id}" style="${x.id===ST.cur?'background:var(--okbg)':''}"><div class="m"><b>${esc(x.info.loaderCN||'(loader?)')}</b> · ${esc(x.info.date)}<small>${esc(x.info.pit)} · ${x.segs.length} data · ${esc(x.info.material)}</small></div><button class="btn red sm" data-rm="${x.id}">Hapus</button></div>`).join('')}</div>
   <div class="grid g2" style="margin-top:12px"><button class="btn acc" id="mNew">＋ Sesi baru (kosong)</button><button class="btn ghost" id="mDup">⧉ Sesi baru, setup sama</button></div>
+  <div class="card" style="margin:12px 0 0"><h3>Mode Offline</h3><p class="mut" id="offTxt" style="margin:0 0 8px"></p><button class="btn ghost" id="mInstall" style="width:100%" ${DEFERRED?'':'hidden'}>📲 Pasang ke layar utama</button></div>
   <button class="btn ghost" style="width:100%;margin-top:8px" id="mClose">Tutup</button>`;
+  offState();
   d.showModal();
   d.onclick=e=>{
     const sw=e.target.closest('[data-sw]'),rm=e.target.closest('[data-rm]');
@@ -535,6 +537,7 @@ document.addEventListener('click',e=>{
   if(t.dataset.delu!==undefined){if(confirm('Hapus unit tambahan ini?')){MD.units.splice(+t.dataset.delu,1);saveMD();renderMaster()}return}
   if(t.id==='mExp'){download(new Blob([JSON.stringify({flaz_master:1,...MD},null,1)],{type:'application/json'}),'FLAZ_master_data.json');toast('Master data diunduh');return}
   if(t.id==='mImp'){$('#mFile').click();return}
+  if(t.id==='mInstall'){if(DEFERRED){DEFERRED.prompt();DEFERRED=null;t.hidden=true}return}
 });
 $('#v-setup').addEventListener('change',onSetupChange);
 
@@ -762,7 +765,22 @@ load();renderHead();
 VIEW=S().segs.length||S().open?'obs':'setup';
 show(VIEW);wakeLock();
 window.__flaz={calc,S:()=>S(),ST:()=>ST,exportXlsx,exportPdf,tapAct,stopAct,undo,newSession,renderAll,buildSheets};
-if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
+let DEFERRED=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();DEFERRED=e});
+async function offState(){
+  const el=$('#offl'),tx=$('#offTxt');let cls='off',lab='',desc='';
+  const on=navigator.onLine;
+  if(!('serviceWorker' in navigator)||!location.protocol.startsWith('http')){lab='Mode file';desc='Dibuka sebagai file lokal. Data tetap tersimpan di HP, tetapi untuk offline penuh buka lewat alamat https (GitHub Pages) lalu pasang ke layar utama.'}
+  else{let ok=false;try{ok=!!(await caches.match('index.html'))&&!!navigator.serviceWorker.controller}catch(e){}
+    if(ok){cls='ok';lab=on?'Offline siap ✓':'Offline ✓';desc='Aplikasi tersimpan di HP dan bisa dibuka tanpa sinyal. '+(on?'Saat ini online.':'Saat ini offline.')}
+    else{lab=on?'Menyiapkan…':'Offline';desc=on?'Sedang menyimpan aplikasi untuk offline. Biarkan terbuka beberapa detik, lalu muat ulang sekali.':'Aplikasi belum tersimpan. Buka sekali saat ada sinyal.'}}
+  if(el){el.textContent=lab;el.className='pill '+cls}if(tx)tx.textContent=desc}
+window.addEventListener('online',offState);window.addEventListener('offline',offState);
+if('serviceWorker' in navigator&&location.protocol.startsWith('http')){
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+  navigator.serviceWorker.ready.then(()=>{[300,1500,4000,9000].forEach(ms=>setTimeout(offState,ms))});
+}
+offState();
 </script>
 </body>
 </html>
