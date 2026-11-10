@@ -93,6 +93,81 @@ dialog::backdrop{background:#0008}
 <dialog id="dlg"></dialog>
 <div id="toast"></div>
 
+<script type="text/plain" id="gs">/**
+ * FLAZ Observer - penerima data ke Google Sheet
+ * 1) Ganti SECRET di bawah dengan kata kunci rahasia Anda sendiri.
+ * 2) Deploy > New deployment > Web app
+ *    Execute as: Me | Who has access: Anyone
+ * 3) Salin URL Web App ke aplikasi (menu Sesi > Google Sheet).
+ */
+const SECRET = 'GANTI_DENGAN_KUNCI_RAHASIA';
+
+const HEAD = {
+  'Data': ['SesiID','Tanggal','Loader','Hauler','Activity','FillFactor','StartTime','Duration (s)','CountRit','CountPass','Nama Aktivitas','Pit','Cuaca','Material','Observer'],
+  'Ringkasan': ['SesiID','Tanggal','Pit','Cuaca','Material','Loader','EGI','Observer','Mulai','Selesai','Total Pass','Total Rit','Total (mnt)','Avg FF','Produksi (BCM)','Produktivitas (BCM/jam)','Target (BCM/jam)','Selisih (BCM/jam)','Selisih (%)','Keterangan','BBM (L)','BBM (L/jam)','BBM (L/BCM)','Catatan','Dikirim'],
+  'Rit Hauler': ['SesiID','Tanggal','Loader','Hauler','Rit ke-','Mulai','Selesai','Pass','Loading (s)','Positioning (s)','CT (s)','Status'],
+  'Hauler': ['SesiID','Tanggal','Loader','Hauler','Model','Kap (BCM)','N Rit','Avg Pass','Avg Loading (mnt)','Avg Travel (mnt)','Total Waiting (mnt)','Avg CT (mnt)','Avg Speed (km/jam)','Produksi (BCM)']
+};
+
+function doGet() {
+  return out_({ ok: true, msg: 'FLAZ endpoint aktif' });
+}
+
+function doPost(e) {
+  try {
+    const p = JSON.parse(e.postData.contents);
+    if (p.token !== SECRET) return out_({ ok: false, error: 'Kunci rahasia salah' });
+    if (p.ping) return out_({ ok: true, msg: 'Koneksi OK' });
+    const lock = LockService.getScriptLock();
+    lock.waitLock(30000);
+    try {
+      const ss = SpreadsheetApp.getActiveSpreadsheet();
+      Object.keys(HEAD).forEach(function (n) {
+        upsert_(ss, n, p.sid, (p.tables && p.tables[n]) || []);
+      });
+    } finally {
+      lock.releaseLock();
+    }
+    return out_({ ok: true, sid: p.sid });
+  } catch (err) {
+    return out_({ ok: false, error: String(err) });
+  }
+}
+
+// Hapus baris lama milik sesi yang sama, lalu tulis data terbaru (aman dikirim ulang).
+function upsert_(ss, name, sid, rows) {
+  const head = HEAD[name];
+  let sh = ss.getSheetByName(name);
+  if (!sh) {
+    sh = ss.insertSheet(name);
+    sh.appendRow(head);
+    sh.getRange(1, 1, 1, head.length).setFontWeight('bold').setBackground('#0f172a').setFontColor('#ffffff');
+    sh.setFrozenRows(1);
+  }
+  const last = sh.getLastRow();
+  if (last > 1) {
+    const ids = sh.getRange(2, 1, last - 1, 1).getValues();
+    let i = ids.length - 1;
+    while (i >= 0) {
+      if (String(ids[i][0]) === sid) {
+        let j = i;
+        while (j > 0 && String(ids[j - 1][0]) === sid) j--;
+        sh.deleteRows(j + 2, i - j + 1);
+        i = j - 1;
+      } else {
+        i--;
+      }
+    }
+  }
+  if (rows.length) {
+    sh.getRange(sh.getLastRow() + 1, 1, rows.length, head.length).setValues(rows);
+  }
+}
+
+function out_(o) {
+  return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON);
+}
+</script>
 <script>
 /* ============ DATABASE (dari sheet "db" pada Excel master FLAZ) ============ */
 const DB = {"loaders": {"PC2000": {"bucket": 12, "fc": 128, "maxfc": 240}, "EX1900": {"bucket": 11.6, "fc": 110, "maxfc": 210}, "PC1250": {"bucket": 7.5, "fc": 98, "maxfc": 187}, "EX1200": {"bucket": 7.1, "fc": 95, "maxfc": 187}, "CAT395": {"bucket": 7, "fc": 85, "maxfc": 167}, "DX1000": {"bucket": 6.8, "fc": 85, "maxfc": 167}, "EC950": {"bucket": 6.42, "fc": 85, "maxfc": 167}, "DX800": {"bucket": 5.58, "fc": 70, "maxfc": 140}, "EC480": {"bucket": 2.7, "fc": 40, "maxfc": 85}, "SY500": {"bucket": 2.7, "fc": 40, "maxfc": 85}, "PC400": {"bucket": 2.5, "fc": 35, "maxfc": 73}, "PC300": {"bucket": 1.8, "fc": 30, "maxfc": 65}, "PC200": {"bucket": 1, "fc": 25, "maxfc": 55}, "SY1250H": {"bucket": 8, "fc": 97, "maxfc": 194}}, "units": [["HEX 1205", "PC1250"], ["HEX 1206", "EC950"], ["HEX 1207", "CAT395"], ["HEX 1208", "CAT395"], ["HEX 901", "EC950"], ["HEX 418", "PC400"], ["HEX 422", "EC480"], ["HEX 423", "EC480"], ["HEX 426", "EC480"], ["HEX 436", "EC480"], ["HEX 437", "EC480"], ["HEX 438", "EC480"], ["HEX 439", "EC480"], ["HEX 440", "EC480"], ["HEX 443", "EC480"], ["HEX 444", "SY500"], ["HEX 445", "SY500"], ["HEX 446", "SY500"], ["HEX 206", "PC200"], ["HEX 207", "PC200"], ["HEX 212", "PC200"], ["HEX 214", "PC200"], ["HEX 215", "PC200"], ["HEX 216", "PC200"], ["HEX 217", "PC200"], ["ODT02", "SKT105S_BP"], ["ODT06", "SKT105S_BP"], ["ODT10", "SKT105S_BP"], ["ODT12", "SKT105S_BP"], ["HDT 132", "P360"], ["HDT 133", "P360"], ["HDT 134", "P360"], ["HDT 135", "P360"], ["HDT 136", "P360"], ["HDT 137", "P360"], ["HDT 138", "P360"], ["HDT 139", "P360"], ["HDT 140", "P360"], ["HDT 142", "P360"], ["HDT 143", "P360"], ["HDT 154", "P360"], ["HDT 155", "P360"], ["HDT 156", "P360"], ["HDT 157", "P360"], ["HDT 158", "P360"], ["HDT 159", "P360"], ["HDT 160", "P360"], ["HDT 161", "P360"], ["ODT04", "SKT105S_BP"], ["ODT07", "SKT105S_BP"], ["HDT 233", "FMX400"], ["HDT 234", "FMX400"], ["HDT 235", "FMX400"], ["HDT 258", "FMX400"], ["HDT 259", "FMX400"], ["HDT 260", "FMX400"], ["HDT 261", "FMX400"], ["HDT 262", "FMX400"], ["HDT 263", "FMX400"], ["HDT 264", "FMX400"], ["HDT 265", "FMX400"], ["HDT 266", "FMX400"], ["HDT 267", "FMX400"], ["HDT 268", "FMX400"], ["HDT 305", "KR440"], ["HDT 306", "KR440"], ["HDT 307", "KR440"], ["HDT 308", "KR440"], ["HDT 309", "KR440"], ["HDT 310", "KR440"], ["HDT 311", "KR440"], ["HDT 312", "KR440"], ["HDT 313", "KR440"], ["HDT 314", "KR440"], ["HDT 315", "KR440"], ["HDT 316", "KR440"], ["HDT 701", "OHT777"], ["HDT 702", "OHT777"], ["HDT 703", "OHT777"], ["HDT 704", "OHT777"], ["HDT 736", "OHT777"], ["HDT 737", "OHT777"], ["HDT 738", "OHT777"], ["HDT 739", "OHT777"], ["HDT 740", "OHT777"], ["HDT 741", "OHT777"], ["HDT 744", "OHT777"], ["HDT 745", "OHT777"], ["HDT 732", "R100"], ["HDT 733", "R100"], ["HDT 734", "R100"], ["HDT 735", "R100"], ["HDT 742", "R100"], ["HDT 743", "R100"], ["DT 07", "P360"], ["DT 08", "P360"], ["DT 09", "P360"], ["DT 10", "P360"], ["DT 11", "P360"], ["DT 12", "P360"], ["DT 13", "P360"], ["DT 14", "P360"], ["DT 15", "P360"], ["DT 16", "P360"], ["DT 17", "P360"], ["DT 18", "P360"], ["DT 19", "FMX400"], ["DT 20", "FMX400"], ["DT 21", "FMX400"], ["DT 22", "FMX400"], ["DT 23", "FMX400"], ["DT 24", "FMX400"], ["FJT 001", "FM260JD"], ["FJT 002", "FM260JD"], ["FJT 003", "FM260JD"], ["FJT 004", "FM260JD"], ["FJT 005", "FM260JD"], ["FJT 006", "FM260JD"], ["FJT 007", "FM260JD"], ["FJT 008", "FM260JD"], ["FJT 009", "FM260JD"], ["FJT 010", "FM260JD"], ["BMS058", "FM260JD"], ["BMS059", "FM260JD"], ["BMS060", "FM260JD"], ["BMS061", "FM260JD"], ["BMS062", "FM260JD"]], "std": {"PC2000|TS": {"DL": 10, "SL": 7, "DU": 5, "SE": 5, "PO": 1, "DP": 0, "CO": 0, "WD": 4.53012048192771, "TV": 0, "ff": 0.925, "pdty": 940}, "SY1250H|TS": {"DL": 10, "SL": 7, "DU": 5, "SE": 5, "PO": 1, "DP": 0, "CO": 0, "WD": 4.53012048192771, "TV": 0, "ff": 0.925, "pdty": 630}, "PC1250|TS": {"DL": 9, "SL": 6, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 3.9156626506024104, "TV": 0, "ff": 0.925, "pdty": 660}, "EX1200|TS": {"DL": 8, "SL": 6, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 3.710843373493976, "TV": 0, "ff": 0.925, "pdty": 660}, "CAT395|TS": {"DL": 8, "SL": 6, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 3.710843373493976, "TV": 0, "ff": 0.925, "pdty": 650}, "DX1000|TS": {"DL": 8, "SL": 6, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 3.710843373493976, "TV": 0, "ff": 0.925, "pdty": 630}, "EC950|TS": {"DL": 8, "SL": 6, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 3.710843373493976, "TV": 0, "ff": 0.925, "pdty": 590}, "DX800|TS": {"DL": 7, "SL": 6, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 3.506024096385545, "TV": 0, "ff": 0.925, "pdty": 540}, "EC480|TS": {"DL": 6, "SL": 5, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 3.096385542168676, "TV": 0, "ff": 0.925, "pdty": 290}, "SY500|TS": {"DL": 6, "SL": 5, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 3.096385542168676, "TV": 0, "ff": 0.925, "pdty": 290}, "PC400|TS": {"DL": 6, "SL": 5, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 3.096385542168676, "TV": 0, "ff": 0.925, "pdty": 270}, "PC300|TS": {"DL": 5, "SL": 4, "DU": 5, "SE": 3, "PO": 1, "DP": 0, "CO": 0, "WD": 2.481927710843376, "TV": 0, "ff": 0.925, "pdty": 230}, "PC200|TS": {"DL": 5, "SL": 4, "DU": 5, "SE": 3, "PO": 1, "DP": 0, "CO": 0, "WD": 2.481927710843376, "TV": 0, "ff": 0.925, "pdty": 130}, "PC2000|OB": {"DL": 10, "SL": 7, "DU": 5, "SE": 5, "PO": 1, "DP": 0, "CO": 0, "WD": 4.734939759036145, "TV": 0, "ff": 0.89, "pdty": 910}, "SY1250H|OB": {"DL": 9, "SL": 7, "DU": 5, "SE": 5, "PO": 1, "DP": 0, "CO": 0, "WD": 4.734939759036145, "TV": 0, "ff": 0.89, "pdty": 630}, "PC1250|OB": {"DL": 9, "SL": 6, "DU": 5, "SE": 5, "PO": 1, "DP": 0, "CO": 0, "WD": 5.12048192771084, "TV": 0, "ff": 0.89, "pdty": 610}, "EX1200|OB": {"DL": 8, "SL": 6, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 3.9156626506024104, "TV": 0, "ff": 0.89, "pdty": 630}, "CAT395|OB": {"DL": 8, "SL": 6, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 3.9156626506024104, "TV": 0, "ff": 0.89, "pdty": 620}, "DX1000|OB": {"DL": 8, "SL": 6, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 3.9156626506024104, "TV": 0, "ff": 0.89, "pdty": 600}, "EC950|OB": {"DL": 8, "SL": 6, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 3.9156626506024104, "TV": 0, "ff": 0.89, "pdty": 570}, "DX800|OB": {"DL": 7, "SL": 6, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 3.710843373493976, "TV": 0, "ff": 0.89, "pdty": 520}, "EC480|OB": {"DL": 6, "SL": 5, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 3.3012048192771104, "TV": 0, "ff": 0.89, "pdty": 280}, "SY500|OB": {"DL": 6, "SL": 5, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 3.3012048192771104, "TV": 0, "ff": 0.89, "pdty": 280}, "PC400|OB": {"DL": 6, "SL": 5, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 3.3012048192771104, "TV": 0, "ff": 0.89, "pdty": 260}, "PC300|OB": {"DL": 5, "SL": 4, "DU": 5, "SE": 3, "PO": 1, "DP": 0, "CO": 0, "WD": 2.686746987951807, "TV": 0, "ff": 0.89, "pdty": 220}, "PC200|OB": {"DL": 5, "SL": 4, "DU": 5, "SE": 3, "PO": 1, "DP": 0, "CO": 0, "WD": 2.686746987951807, "TV": 0, "ff": 0.89, "pdty": 120}, "PC2000|MD": {"DL": 10, "SL": 7, "DU": 5, "SE": 5, "PO": 2, "DP": 1, "CO": 0, "WD": 3.5301204819277103, "TV": 2, "ff": 0.725, "pdty": 880}, "SY1250H|MD": {"DL": 10, "SL": 7, "DU": 5, "SE": 5, "PO": 2, "DP": 1, "CO": 0, "WD": 3.5301204819277103, "TV": 2, "ff": 0.725, "pdty": 580}, "PC1250|MD": {"DL": 9, "SL": 6, "DU": 5, "SE": 4, "PO": 2, "DP": 1, "CO": 0, "WD": 2.9156626506024104, "TV": 2, "ff": 0.725, "pdty": 620}, "EX1200|MD": {"DL": 8, "SL": 6, "DU": 5, "SE": 4, "PO": 2, "DP": 1, "CO": 0, "WD": 2.710843373493976, "TV": 2, "ff": 0.725, "pdty": 610}, "CAT395|MD": {"DL": 8, "SL": 6, "DU": 5, "SE": 4, "PO": 2, "DP": 1, "CO": 0, "WD": 2.710843373493976, "TV": 2, "ff": 0.725, "pdty": 600}, "DX1000|MD": {"DL": 8, "SL": 6, "DU": 5, "SE": 4, "PO": 2, "DP": 1, "CO": 0, "WD": 2.710843373493976, "TV": 2, "ff": 0.725, "pdty": 580}, "EC950|MD": {"DL": 8, "SL": 6, "DU": 5, "SE": 4, "PO": 2, "DP": 1, "CO": 0, "WD": 2.710843373493976, "TV": 2, "ff": 0.725, "pdty": 550}, "DX800|MD": {"DL": 7, "SL": 6, "DU": 5, "SE": 4, "PO": 2, "DP": 1, "CO": 0, "WD": 2.506024096385545, "TV": 3, "ff": 0.725, "pdty": 500}, "EC480|MD": {"DL": 6, "SL": 5, "DU": 5, "SE": 4, "PO": 2, "DP": 1, "CO": 0, "WD": 2.096385542168676, "TV": 4, "ff": 0.725, "pdty": 270}, "SY500|MD": {"DL": 6, "SL": 5, "DU": 5, "SE": 4, "PO": 2, "DP": 1, "CO": 0, "WD": 2.096385542168676, "TV": 5, "ff": 0.725, "pdty": 270}, "PC400|MD": {"DL": 6, "SL": 5, "DU": 5, "SE": 4, "PO": 2, "DP": 1, "CO": 0, "WD": 2.096385542168676, "TV": 6, "ff": 0.725, "pdty": 250}, "PC300|MD": {"DL": 5, "SL": 4, "DU": 5, "SE": 3, "PO": 2, "DP": 1, "CO": 0, "WD": 1.481927710843376, "TV": 7, "ff": 0.725, "pdty": 210}, "PC200|MD": {"DL": 5, "SL": 4, "DU": 5, "SE": 3, "PO": 2, "DP": 1, "CO": 0, "WD": 1.481927710843376, "TV": 8, "ff": 0.725, "pdty": 120}, "PC2000|ON": {"DL": 11, "SL": 7, "DU": 5, "SE": 5, "PO": 1, "DP": 0, "CO": 0, "WD": 4.734939759036145, "TV": 0, "ff": 0.925, "pdty": 910}, "SY1250H|ON": {"DL": 11, "SL": 7, "DU": 5, "SE": 5, "PO": 1, "DP": 0, "CO": 0, "WD": 4.734939759036145, "TV": 0, "ff": 0.925, "pdty": 610}, "PC1250|ON": {"DL": 10, "SL": 6, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 4.120481927710845, "TV": 0, "ff": 0.925, "pdty": 640}, "EX1200|ON": {"DL": 9, "SL": 6, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 3.9156626506024104, "TV": 0, "ff": 0.925, "pdty": 630}, "CAT395|ON": {"DL": 9, "SL": 6, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 3.9156626506024104, "TV": 0, "ff": 0.925, "pdty": 620}, "DX1000|ON": {"DL": 9, "SL": 6, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 3.9156626506024104, "TV": 0, "ff": 0.925, "pdty": 600}, "EC950|ON": {"DL": 9, "SL": 6, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 3.9156626506024104, "TV": 0, "ff": 0.925, "pdty": 570}, "DX800|ON": {"DL": 9, "SL": 6, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 3.9156626506024104, "TV": 0, "ff": 0.925, "pdty": 490}, "EC480|ON": {"DL": 9, "SL": 5, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 3.710843373493976, "TV": 0, "ff": 0.925, "pdty": 250}, "SY500|ON": {"DL": 10, "SL": 5, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 3.9156626506024104, "TV": 0, "ff": 0.925, "pdty": 240}, "PC400|ON": {"DL": 11, "SL": 5, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 4.120481927710845, "TV": 0, "ff": 0.925, "pdty": 210}, "PC300|ON": {"DL": 11, "SL": 4, "DU": 5, "SE": 3, "PO": 1, "DP": 0, "CO": 0, "WD": 3.710843373493976, "TV": 0, "ff": 0.925, "pdty": 170}, "PC200|ON": {"DL": 12, "SL": 4, "DU": 5, "SE": 3, "PO": 1, "DP": 0, "CO": 0, "WD": 3.9156626506024104, "TV": 0, "ff": 0.925, "pdty": 90}, "PC2000|CC": {"DL": 12, "SL": 7, "DU": 5, "SE": 5, "PO": 1, "DP": 0, "CO": 0, "WD": 4.939759036144579, "TV": 0, "ff": 0.775, "pdty": 830}, "SY1250H|CC": {"DL": 12, "SL": 7, "DU": 5, "SE": 5, "PO": 1, "DP": 0, "CO": 0, "WD": 4.939759036144579, "TV": 0, "ff": 0.775, "pdty": 560}, "PC1250|CC": {"DL": 11, "SL": 6, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 4.325301204819279, "TV": 0, "ff": 0.775, "pdty": 580}, "EX1200|CC": {"DL": 10, "SL": 6, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 4.120481927710845, "TV": 0, "ff": 0.775, "pdty": 570}, "CAT395|CC": {"DL": 10, "SL": 6, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 4.120481927710845, "TV": 0, "ff": 0.775, "pdty": 560}, "DX1000|CC": {"DL": 10, "SL": 6, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 4.120481927710845, "TV": 0, "ff": 0.775, "pdty": 550}, "EC950|CC": {"DL": 10, "SL": 6, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 4.120481927710845, "TV": 0, "ff": 0.775, "pdty": 520}, "DX800|CC": {"DL": 10, "SL": 6, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 4.120481927710845, "TV": 0, "ff": 0.775, "pdty": 450}, "EC480|CC": {"DL": 10, "SL": 5, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 3.9156626506024104, "TV": 0, "ff": 0.775, "pdty": 230}, "SY500|CC": {"DL": 11, "SL": 5, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 4.120481927710845, "TV": 0, "ff": 0.775, "pdty": 220}, "PC400|CC": {"DL": 12, "SL": 5, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 4.325301204819279, "TV": 0, "ff": 0.775, "pdty": 190}, "PC300|CC": {"DL": 12, "SL": 4, "DU": 5, "SE": 3, "PO": 1, "DP": 0, "CO": 0, "WD": 3.9156626506024104, "TV": 0, "ff": 0.775, "pdty": 150}, "PC200|CC": {"DL": 13, "SL": 4, "DU": 5, "SE": 3, "PO": 1, "DP": 0, "CO": 0, "WD": 4.120481927710845, "TV": 0, "ff": 0.775, "pdty": 80}}, "cap": {"SKT105S_BP|OB": 25, "FMX400|OB": 11, "KR440|OB": 11, "OHT777|OB": 43, "R100|OB": 43, "FM260JD|OB": 8.5, "SKT105S_BP|TS": 8.5, "FMX400|TS": 8.5, "KR440|TS": 8.5, "OHT777|TS": 31.8, "R100|TS": 31.8, "FM260JD|TS": 6.6, "SKT105S_BP|MD": 6.6, "FMX400|MD": 6.6, "KR440|MD": 6.6, "OHT777|MD": 25, "R100|MD": 25, "FM260JD|MD": 5.1, "SKT105S_BP|CC": 222}, "mat": {"TS": {"sf": 1.3, "ff": 0.925}, "OB": {"sf": 1.3, "ff": 0.89}, "MD": {"sf": 1.1, "ff": 0.725}, "ON": {"sf": 1.3, "ff": 0.925}, "CC": {"sf": 1.15, "ff": 0.775}}, "weather": ["Hujan", "Gerimis", "After Slippery", "Kering", "Basah Bukan Karena Hujan"], "pit": ["TAKALOT", "NORTH G", "NORTH F", "Other"], "ffgrades": [["A", "Easy Loading", 1.15], ["BU", "Average Up Loading", 1.05], ["B", "Average Loading", 0.925], ["BB", "Average Bottom Loading", 0.825], ["C", "Rather Difficult Loading", 0.775], ["D", "Difficult Loading", 0.725]]};
@@ -410,7 +485,8 @@ function renderRes(){
    <tr class="grp"><td>TOTAL/AVG</td><td>${c.hT.n}</td><td>${fN(c.hT.avgPass,1)}</td><td>${fN(c.hT.load)}</td><td>${fN(c.hT.travel)}</td><td>${fN(c.hT.wait)}</td><td>${fN(c.hT.ct)}</td><td>${fN(c.hT.speed,1)}</td><td>${fN(c.hT.prod,1)}</td></tr></table></div>
    <p class="mut">Load/Travel/Wait/CT dalam menit. CT = selisih awal pemuatan rit berurutan (butuh ≥2 rit per hauler). Travel = CT − Load.</p></div>
   <div class="card"><h3>Ekspor</h3><div class="grid g2"><button class="btn acc" id="xXls">📗 Excel (.xlsx)</button><button class="btn acc" id="xPdf">📕 PDF</button></div>
-   <button class="btn ghost" style="width:100%;margin-top:8px" id="xShare">📤 Bagikan (WhatsApp dll)</button></div>`;
+   <button class="btn ghost" style="width:100%;margin-top:8px" id="xShare">📤 Bagikan (WhatsApp dll)</button>
+   <button class="btn ghost" style="width:100%;margin-top:8px" id="xSheet">☁ Kirim ke Google Sheet</button></div>`;
   function grp(t,l){const rs=l.map(k=>c.rows.find(r=>r.c===k));
     return `<tr class="grp"><td colspan="7">${t}</td></tr>`+rs.map(r=>`<tr><td>${r.c} <span class="mut">${ACTS[r.c].s}</span></td><td>${fN(r.plan,1)}</td><td>${fN(r.avg,1)}</td><td>${fN(r.planMin)}</td><td>${fN(r.min)}</td><td>${fP(r.pctA)}</td><td style="width:50px"><div class="bar"><i style="width:${Math.min(100,r.pctA*100)}%"></i></div></td></tr>`).join('')}
 }
@@ -451,6 +527,7 @@ function openLoader(egi){
       DR.egi=$('#lEgi').value;DR.unitsTxt=$('#lUnits').value;drawLoader()}};
   d.onclick=e=>{if(!DR)return;const t=e.target.closest('button');if(!t)return;
     if(t.dataset.lm){DR.mat=t.dataset.lm;drawLoader(true);return}
+    if(t.dataset.lcp){const src=t.dataset.lcp,l=LD(src);DR.bucket=l.bucket;DR.fc=l.fc;DR.maxfc=l.maxfc;MATS.forEach(m=>{const s=STD(src,m);DR.std[m]=s?{...s}:{}});DR.copied=src;drawLoader();toast('Parameter disalin dari '+src);return}
     if(t.id==='lX'){d.close();return}
     if(t.id==='lOK'){saveLoader();return}
     if(t.id==='lDel'){if(confirm(DB.loaders[DR.egi]?'Kembalikan '+DR.egi+' ke data bawaan?':'Hapus Exca '+DR.egi+'?')){
@@ -460,7 +537,7 @@ function drawLoader(keepScroll){
   const d=$('#dlg'),D=DR,st=D.std[D.mat],sc=d.scrollTop;
   const lbl={DL:'DL gali',SL:'SL swing isi',DU:'DU dump',SE:'SE swing kosong',PO:'PO posisi',DP:'DP gali siap',CO:'CO ganti opr',WD:'WD tunggu',TV:'TV travel'};
   d.innerHTML=`<h3 style="margin:0 0 4px">${D.isNew?'Tambah Exca':'Ubah Exca '+esc(D.egi)}</h3>
-  ${D.isNew?`<label>Salin parameter dari (opsional)</label><select id="lCopy"><option value="">— tidak —</option>${Object.keys(LOADERS()).sort().map(e=>'<option>'+esc(e)+'</option>').join('')}</select>
+  ${D.isNew?`<label>Salin parameter dari (ketuk salah satu, opsional)</label><div class="chips" style="max-height:104px;overflow:auto">${Object.keys(LOADERS()).sort().map(e=>`<button class="chip ${D.copied===e?'on':''}" data-lcp="${esc(e)}">${esc(e)}</button>`).join('')}</div>
   <label>Model (EGI)</label><input id="lEgi" value="${esc(D.egi)}" placeholder="mis. PC300" autocapitalize="characters">`:''}
   <label>Kode unit (CN) — pisahkan dengan koma</label><textarea id="lUnits" rows="2" placeholder="HEX 218, HEX 219">${esc(D.unitsTxt??D.units.join(', '))}</textarea>
   <div class="row"><div><label>Bucket (m³)</label><input type="number" step="0.1" inputmode="decimal" id="lB" value="${esc(D.bucket)}"></div>
@@ -486,6 +563,7 @@ function openHauler(egi){
     if(t.id==='hEgi')DH.egi=t.value;else if(t.id==='hUnits')DH.unitsTxt=t.value;else if(t.dataset.ck)DH.cap[t.dataset.ck]=t.value};
   d.onchange=e=>{if(!DH)return;if(e.target.id==='hCopy'&&e.target.value){const src=e.target.value;MATS.forEach(m=>DH.cap[m]=capOf(src,m));drawHauler()}};
   d.onclick=e=>{if(!DH)return;const t=e.target.closest('button');if(!t)return;
+    if(t.dataset.hcp){const src=t.dataset.hcp;MATS.forEach(m=>DH.cap[m]=capOf(src,m));DH.copied=src;drawHauler();toast('Kapasitas disalin dari '+src);return}
     if(t.id==='hX'){d.close();return}
     if(t.id==='hOK'){saveHauler();return}
     if(t.id==='hDel'){if(confirm('Hapus pengaturan tambahan '+DH.egi+'?')){const g=DH.egi;MATS.forEach(m=>delete MD.cap[g+'|'+m]);MD.units=MD.units.filter(u=>u[1]!==g);saveMD();d.close();renderAll();toast('Selesai')}}};
@@ -493,7 +571,7 @@ function openHauler(egi){
 function drawHauler(){
   const d=$('#dlg'),D=DH;
   d.innerHTML=`<h3 style="margin:0 0 4px">${D.isNew?'Tambah Unit DT (Hauler)':'Ubah DT '+esc(D.egi)}</h3>
-  ${D.isNew?`<label>Salin kapasitas dari (opsional)</label><select id="hCopy"><option value="">— tidak —</option>${HEGIS().map(e=>'<option>'+esc(e)+'</option>').join('')}</select>
+  ${D.isNew?`<label>Salin kapasitas dari (ketuk salah satu, opsional)</label><div class="chips" style="max-height:104px;overflow:auto">${HEGIS().map(e=>`<button class="chip ${D.copied===e?'on':''}" data-hcp="${esc(e)}">${esc(e)}</button>`).join('')}</div>
   <label>Model DT (EGI)</label><input id="hEgi" value="${esc(D.egi)}" placeholder="mis. HD785" autocapitalize="characters">`:''}
   <label>Kode unit (CN) — pisahkan dengan koma</label><textarea id="hUnits" rows="2" placeholder="HDT 801, HDT 802">${esc(D.unitsTxt)}</textarea>
   <h3 style="margin:12px 0 6px">Kapasitas per material (BCM per rit)</h3>
@@ -528,12 +606,75 @@ function saveLoader(){
   saveMD();d.close();renderAll();toast('Master Exca tersimpan');
 }
 
+/* ============ KIRIM KE GOOGLE SHEET ============ */
+const SKEY='flaz.sync.v1';
+const cfg=()=>{try{return Object.assign({url:'',token:'',auto:true},JSON.parse(localStorage.getItem(SKEY)||'{}'))}catch(e){return {url:'',token:'',auto:true}}};
+const setCfg=c=>{try{localStorage.setItem(SKEY,JSON.stringify(c))}catch(e){}};
+const hashS=str=>{let h=5381;for(let i=0;i<str.length;i++)h=((h<<5)+h+str.charCodeAt(i))|0;return h};
+const sigOf=s=>hashS(JSON.stringify([s.segs,s.info,s.haulers,s.ritNo]));
+const pending=()=>Object.values(ST.sessions).filter(s=>s.segs.length&&!s.open&&s.syncSig!==sigOf(s));
+function buildPayload(s,c){
+  const k=calc(s),I=k.I,sid='S'+s.id,date=I.date,ld=I.loaderCN||'';
+  const hn=i=>(s.haulers[i]||{}).cn||'H'+(i+1),v=k.verdict,R=(x,d=2)=>x==null||!isFinite(x)?'':r2(x,d);
+  return {token:c.token,sid,tables:{
+    'Data':k.segs.map(g=>[sid,date,ld,hn(g.h),g.act,g.ff||'',fT(g.start),g.dur,g.rit,g.pass,ACTS[g.act].n,I.pit,I.weather,I.material,I.observer||'']),
+    'Ringkasan':[[sid,date,I.pit,I.weather,I.material,ld,I.loaderEGI,I.observer||'',k.startMs?fT(k.startMs):'',k.stopMs?fT(k.stopMs):'',k.passes,k.hT.n,R(k.totMin),R(k.avgFF,3),R(k.prod),R(k.pdty),k.target||'',v?R(v.gap):'',v?R(v.pct*100,1):'',v?v.text:'',R(k.fuel),R(k.fuelH),R(k.ratio,4),I.note||'',new Date().toLocaleString('id-ID')]],
+    'Rit Hauler':k.rits.map(r=>[sid,date,ld,hn(r.h),r.rit,fT(r.start),fT(r.end),r.pass,R(r.load,1),R(r.po,1),R(r.ct,1),r.done?'Selesai':'Berjalan']),
+    'Hauler':k.hs.filter(h=>h.n>0||h.open).map(h=>[sid,date,ld,h.cn,h.egi,h.cap,h.n,R(h.avgPass),R(h.load),R(h.travel),R(h.wait),R(h.ct),R(h.speed,1),R(h.prod,1)])}};
+}
+async function post(c,body){
+  const ac=new AbortController(),to=setTimeout(()=>ac.abort(),30000);
+  try{const r=await fetch(c.url,{method:'POST',body:JSON.stringify(body),signal:ac.signal});const j=await r.json();return j.ok?{ok:true}:{ok:false,err:j.error||'Ditolak server'}}
+  catch(e){return {ok:false,err:navigator.onLine?'Gagal terhubung (cek URL)':'Tidak ada sinyal'}}finally{clearTimeout(to)}}
+async function sendSession(s,c){
+  c=c||cfg();if(!c.url)return {ok:false,err:'URL Web App belum diisi'};
+  const sig=sigOf(s),r=await post(c,buildPayload(s,c));
+  if(r.ok){s.syncSig=sig;s.syncAt=Date.now();save()}return r}
+let SYNCING=false;
+async function autoSync(){
+  const c=cfg();if(SYNCING||!c.url||!c.auto||!navigator.onLine)return;SYNCING=true;
+  try{let n=0;for(const s of pending()){const r=await sendSession(s,c);if(!r.ok)break;n++}
+    if(n)toast('☁ '+n+' sesi terkirim ke Google Sheet')}finally{SYNCING=false}}
+async function sendNow(onlyCur){
+  const c=cfg();if(!c.url){toast('Isi URL Web App dulu (menu Sesi)');return}
+  if(!navigator.onLine){toast('Offline — data masuk antrean, terkirim saat online');return}
+  const cur=S();if(onlyCur&&!cur.segs.length){toast('Belum ada data');return}
+  toast('Mengirim…');SYNCING=true;
+  try{const list=onlyCur?[cur]:Object.values(ST.sessions).filter(s=>s.segs.length);let ok=0;
+    for(const s of list){const r=await sendSession(s,c);if(!r.ok){toast('Gagal: '+r.err);return}ok++}
+    toast('☁ Terkirim ('+ok+' sesi)')}finally{SYNCING=false;if($('#syncSt'))drawSyncStatus()}}
+function drawSyncStatus(){const s=S(),p=pending().length;
+  $('#syncSt').innerHTML='Sesi ini: <b>'+(s.syncAt&&s.syncSig===sigOf(s)?'terkirim '+fT(s.syncAt):'belum terkirim')+'</b> · Antrean: <b>'+p+' sesi</b>'+(navigator.onLine?'':' · <b>offline</b>')}
+function openSync(){
+  const c=cfg(),d=$('#dlg');
+  d.innerHTML=`<h3 style="margin:0 0 4px">☁ Kirim ke Google Sheet</h3>
+  <p class="mut" id="syncSt" style="margin:0 0 6px"></p>
+  <label>Alamat Web App (URL)</label><input id="yU" value="${esc(c.url)}" placeholder="https://script.google.com/macros/s/.../exec" autocapitalize="none" autocomplete="off">
+  <label>Kunci rahasia (sama dengan SECRET di skrip)</label><input id="yK" value="${esc(c.token)}" autocapitalize="none" autocomplete="off">
+  <label style="display:flex;gap:8px;align-items:center;margin-top:10px"><input type="checkbox" id="yA" ${c.auto?'checked':''} style="width:20px;min-height:20px"> Kirim otomatis saat online</label>
+  <div class="grid g2" style="margin-top:12px"><button class="btn ghost" id="yTest">Tes koneksi</button><button class="btn acc" id="ySend">Kirim semua</button></div>
+  <button class="btn ghost" style="width:100%;margin-top:8px" id="yCopy">📋 Salin kode Apps Script</button>
+  <div class="row" style="margin-top:12px"><button class="btn ghost" id="yX">Tutup</button><button class="btn" id="yOK">Simpan</button></div>`;
+  d.oninput=d.onchange=null;d.onclose=null;d.showModal();drawSyncStatus();
+  const read=()=>{const n={url:$('#yU').value.trim(),token:$('#yK').value.trim(),auto:$('#yA').checked};setCfg(n);return n};
+  d.onclick=async e=>{const t=e.target.closest('button');if(!t)return;
+    if(t.id==='yX'){d.close()}
+    else if(t.id==='yOK'){read();d.close();toast('Pengaturan tersimpan');autoSync()}
+    else if(t.id==='yTest'){const n=read();if(!n.url){toast('Isi URL dulu');return}toast('Menguji…');const r=await post(n,{token:n.token,ping:true});toast(r.ok?'✅ Koneksi OK':'❌ '+r.err)}
+    else if(t.id==='ySend'){read();await sendNow(false)}
+    else if(t.id==='yCopy'){const code=$('#gs').textContent;try{await navigator.clipboard.writeText(code);toast('Kode disalin — tempel di Apps Script')}catch(x){toast('Gagal menyalin; ambil file Code.gs')}}};
+}
+setTimeout(autoSync,2500);
+window.addEventListener('online',()=>setTimeout(autoSync,1500));
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(autoSync,1500)});
+
 /* ============ SESI / MENU ============ */
 function openMenu(){
   const d=$('#dlg');const list=Object.values(ST.sessions).sort((a,b)=>b.created-a.created);
   d.innerHTML=`<h3 style="margin:0 0 8px">Sesi Observasi</h3>
   <div style="max-height:50vh;overflow:auto">${list.map(x=>`<div class="logrow" data-sw="${x.id}" style="${x.id===ST.cur?'background:var(--okbg)':''}"><div class="m"><b>${esc(x.info.loaderCN||'(loader?)')}</b> · ${esc(x.info.date)}<small>${esc(x.info.pit)} · ${x.segs.length} data · ${esc(x.info.material)}</small></div><button class="btn red sm" data-rm="${x.id}">Hapus</button></div>`).join('')}</div>
   <div class="grid g2" style="margin-top:12px"><button class="btn acc" id="mNew">＋ Sesi baru (kosong)</button><button class="btn ghost" id="mDup">⧉ Sesi baru, setup sama</button></div>
+  <button class="btn ghost" style="width:100%;margin-top:8px" id="mSync">☁ Google Sheet (kirim data)</button>
   <div class="card" style="margin:12px 0 0"><h3>Mode Offline</h3><p class="mut" id="offTxt" style="margin:0 0 8px"></p><button class="btn ghost" id="mInstall" style="width:100%" ${DEFERRED?'':'hidden'}>📲 Pasang ke layar utama</button></div>
   <button class="btn ghost" style="width:100%;margin-top:8px" id="mClose">Tutup</button>`;
   offState();
@@ -581,6 +722,8 @@ document.addEventListener('click',e=>{
   if(t.dataset.delu!==undefined){if(confirm('Hapus unit tambahan ini?')){MD.units.splice(+t.dataset.delu,1);saveMD();renderMaster()}return}
   if(t.id==='mExp'){download(new Blob([JSON.stringify({flaz_master:1,...MD},null,1)],{type:'application/json'}),'FLAZ_master_data.json');toast('Master data diunduh');return}
   if(t.id==='mImp'){$('#mFile').click();return}
+  if(t.id==='mSync'){openSync();return}
+  if(t.id==='xSheet'){sendNow(true);return}
   if(t.id==='mInstall'){if(DEFERRED){DEFERRED.prompt();DEFERRED=null;t.hidden=true}return}
 });
 $('#v-setup').addEventListener('change',onSetupChange);
