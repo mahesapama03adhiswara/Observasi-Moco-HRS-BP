@@ -527,7 +527,6 @@ function openLoader(egi){
       DR.egi=$('#lEgi').value;DR.unitsTxt=$('#lUnits').value;drawLoader()}};
   d.onclick=e=>{if(!DR)return;const t=e.target.closest('button');if(!t)return;
     if(t.dataset.lm){DR.mat=t.dataset.lm;drawLoader(true);return}
-    if(t.dataset.lcp){const src=t.dataset.lcp,l=LD(src);DR.bucket=l.bucket;DR.fc=l.fc;DR.maxfc=l.maxfc;MATS.forEach(m=>{const s=STD(src,m);DR.std[m]=s?{...s}:{}});DR.copied=src;drawLoader();toast('Parameter disalin dari '+src);return}
     if(t.id==='lX'){d.close();return}
     if(t.id==='lOK'){saveLoader();return}
     if(t.id==='lDel'){if(confirm(DB.loaders[DR.egi]?'Kembalikan '+DR.egi+' ke data bawaan?':'Hapus Exca '+DR.egi+'?')){
@@ -537,7 +536,7 @@ function drawLoader(keepScroll){
   const d=$('#dlg'),D=DR,st=D.std[D.mat],sc=d.scrollTop;
   const lbl={DL:'DL gali',SL:'SL swing isi',DU:'DU dump',SE:'SE swing kosong',PO:'PO posisi',DP:'DP gali siap',CO:'CO ganti opr',WD:'WD tunggu',TV:'TV travel'};
   d.innerHTML=`<h3 style="margin:0 0 4px">${D.isNew?'Tambah Exca':'Ubah Exca '+esc(D.egi)}</h3>
-  ${D.isNew?`<label>Salin parameter dari (ketuk salah satu, opsional)</label><div class="chips" style="max-height:104px;overflow:auto">${Object.keys(LOADERS()).sort().map(e=>`<button class="chip ${D.copied===e?'on':''}" data-lcp="${esc(e)}">${esc(e)}</button>`).join('')}</div>
+  ${D.isNew?`<label>Salin parameter dari (opsional)</label><select id="lCopy"><option value="">— tidak —</option>${Object.keys(LOADERS()).sort().map(e=>'<option>'+esc(e)+'</option>').join('')}</select>
   <label>Model (EGI)</label><input id="lEgi" value="${esc(D.egi)}" placeholder="mis. PC300" autocapitalize="characters">`:''}
   <label>Kode unit (CN) — pisahkan dengan koma</label><textarea id="lUnits" rows="2" placeholder="HEX 218, HEX 219">${esc(D.unitsTxt??D.units.join(', '))}</textarea>
   <div class="row"><div><label>Bucket (m³)</label><input type="number" step="0.1" inputmode="decimal" id="lB" value="${esc(D.bucket)}"></div>
@@ -563,7 +562,6 @@ function openHauler(egi){
     if(t.id==='hEgi')DH.egi=t.value;else if(t.id==='hUnits')DH.unitsTxt=t.value;else if(t.dataset.ck)DH.cap[t.dataset.ck]=t.value};
   d.onchange=e=>{if(!DH)return;if(e.target.id==='hCopy'&&e.target.value){const src=e.target.value;MATS.forEach(m=>DH.cap[m]=capOf(src,m));drawHauler()}};
   d.onclick=e=>{if(!DH)return;const t=e.target.closest('button');if(!t)return;
-    if(t.dataset.hcp){const src=t.dataset.hcp;MATS.forEach(m=>DH.cap[m]=capOf(src,m));DH.copied=src;drawHauler();toast('Kapasitas disalin dari '+src);return}
     if(t.id==='hX'){d.close();return}
     if(t.id==='hOK'){saveHauler();return}
     if(t.id==='hDel'){if(confirm('Hapus pengaturan tambahan '+DH.egi+'?')){const g=DH.egi;MATS.forEach(m=>delete MD.cap[g+'|'+m]);MD.units=MD.units.filter(u=>u[1]!==g);saveMD();d.close();renderAll();toast('Selesai')}}};
@@ -571,7 +569,7 @@ function openHauler(egi){
 function drawHauler(){
   const d=$('#dlg'),D=DH;
   d.innerHTML=`<h3 style="margin:0 0 4px">${D.isNew?'Tambah Unit DT (Hauler)':'Ubah DT '+esc(D.egi)}</h3>
-  ${D.isNew?`<label>Salin kapasitas dari (ketuk salah satu, opsional)</label><div class="chips" style="max-height:104px;overflow:auto">${HEGIS().map(e=>`<button class="chip ${D.copied===e?'on':''}" data-hcp="${esc(e)}">${esc(e)}</button>`).join('')}</div>
+  ${D.isNew?`<label>Salin kapasitas dari (opsional)</label><select id="hCopy"><option value="">— tidak —</option>${HEGIS().map(e=>'<option>'+esc(e)+'</option>').join('')}</select>
   <label>Model DT (EGI)</label><input id="hEgi" value="${esc(D.egi)}" placeholder="mis. HD785" autocapitalize="characters">`:''}
   <label>Kode unit (CN) — pisahkan dengan koma</label><textarea id="hUnits" rows="2" placeholder="HDT 801, HDT 802">${esc(D.unitsTxt)}</textarea>
   <h3 style="margin:12px 0 6px">Kapasitas per material (BCM per rit)</h3>
