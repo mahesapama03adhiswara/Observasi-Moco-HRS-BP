@@ -125,7 +125,7 @@ function buzz(n=25){try{navigator.vibrate&&navigator.vibrate(n)}catch(e){}}
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 /* ---- Master data tambahan (disimpan di HP, menimpa/menambah database bawaan) ---- */
 const MKEY='flaz.master.v1';
-let MD={units:[],loaders:{},std:{}};
+let MD={units:[],loaders:{},std:{},cap:{}};
 try{const r=localStorage.getItem(MKEY);if(r)MD=Object.assign(MD,JSON.parse(r))}catch(e){}
 const saveMD=()=>{try{localStorage.setItem(MKEY,JSON.stringify(MD))}catch(e){}};
 const LOADERS=()=>({...DB.loaders,...MD.loaders});
@@ -134,7 +134,8 @@ const STD=(e,m)=>MD.std[e+'|'+m]||DB.std[e+'|'+m]||null;
 const UNITS=()=>[...MD.units,...DB.units.filter(u=>!MD.units.some(m=>m[0].toLowerCase()===u[0].toLowerCase()))];
 const egiOf=cn=>{const k=String(cn||'').trim().toLowerCase();const u=UNITS().find(x=>x[0].toLowerCase()===k);return u?u[1]:''};
 const isLoaderEgi=e=>!!LD(e);
-const capOf=(egi,mat)=>DB.cap[egi+'|'+mat]??'';
+const HEGIS=()=>{const s=new Set();UNITS().forEach(u=>{if(!isLoaderEgi(u[1]))s.add(u[1])});[...Object.keys(DB.cap),...Object.keys(MD.cap||{})].forEach(k=>s.add(k.split('|')[0]));return [...s].sort()};
+const capOf=(egi,mat)=>(MD.cap&&MD.cap[egi+'|'+mat])??DB.cap[egi+'|'+mat]??'';
 
 /* ============ STATE ============ */
 let ST={sessions:{},cur:null};
@@ -423,13 +424,17 @@ function renderMaster(){
    <button class="btn acc" style="width:100%" id="mAddL">＋ Tambah Exca / Unit Baru</button>
    <div style="margin-top:8px">${egis.map(e=>{const l=L[e],n=U.filter(u=>u[1]===e).length,tag=MD.loaders[e]?(DB.loaders[e]?'diubah':'baru'):'';
      return `<div class="logrow" data-ml="${esc(e)}"><div class="m"><b>${esc(e)}</b> ${tag?'<span class="mut">('+tag+')</span>':''}<small>Bucket ${l.bucket} m³ · FC ${l.fc} L/jam · ${n} unit · standar: ${MATS.filter(m=>STD(e,m)).join(', ')||'-'}</small></div><span class="mut">›</span></div>`}).join('')}</div></div>
+  <div class="card"><h3>Unit DT (Hauler)</h3>
+   <button class="btn acc" style="width:100%" id="mAddH">＋ Tambah Unit DT Baru</button>
+   <div style="margin-top:8px">${HEGIS().map(e=>{const n=U.filter(u=>u[1]===e).length,cs=MATS.filter(m=>capOf(e,m)!=='').map(m=>m+' '+capOf(e,m)).join(' · '),tag=Object.keys(MD.cap||{}).some(k=>k.startsWith(e+'|'))?'(diubah/baru)':'';
+     return `<div class="logrow" data-mh="${esc(e)}"><div class="m"><b>${esc(e)}</b> <span class="mut">${tag}</span><small>${n} unit · kapasitas BCM: ${cs||'-'}</small></div><span class="mut">›</span></div>`}).join('')}</div></div>
   <div class="card"><h3>Unit (CN) tambahan</h3>${MD.units.length?MD.units.map((u,i)=>`<div class="logrow"><div class="m"><b>${esc(u[0])}</b><small>${esc(u[1])}</small></div><button class="btn red sm" data-delu="${i}">Hapus</button></div>`).join(''):'<p class="mut">Belum ada unit tambahan.</p>'}</div>
   <div class="card"><h3>Cadangan Master Data</h3><div class="grid g2"><button class="btn ghost" id="mExp">⬇ Ekspor (.json)</button><button class="btn ghost" id="mImp">⬆ Impor (.json)</button></div><input type="file" id="mFile" accept=".json,application/json" hidden><p class="mut">Pindahkan master data ke HP lain, atau simpan sebagai cadangan.</p></div>`;
 }
 document.addEventListener('change',e=>{if(e.target.id!=='mFile'||!e.target.files[0])return;
   const fr=new FileReader();fr.onload=()=>{try{const j=JSON.parse(fr.result);if(!j.flaz_master)throw 0;
     (j.units||[]).forEach(u=>{MD.units=MD.units.filter(x=>x[0].toLowerCase()!==u[0].toLowerCase());MD.units.push(u)});
-    Object.assign(MD.loaders,j.loaders||{});Object.assign(MD.std,j.std||{});saveMD();renderMaster();toast('Master data diimpor')}catch(x){toast('File master tidak valid')}};
+    Object.assign(MD.loaders,j.loaders||{});Object.assign(MD.std,j.std||{});MD.cap=Object.assign(MD.cap||{},j.cap||{});saveMD();renderMaster();toast('Master data diimpor')}catch(x){toast('File master tidak valid')}};
   fr.readAsText(e.target.files[0]);e.target.value=''});
 let DR=null;
 function openLoader(egi){
@@ -470,6 +475,43 @@ function drawLoader(keepScroll){
    <div style="grid-column:span 2"><label style="margin-top:4px">Target std (BCM/jam)</label><input type="number" step="0.1" inputmode="decimal" data-sk="pdty" value="${st.pdty??''}"></div></div>
   <div class="row" style="margin-top:14px">${!D.isNew&&MD.loaders[D.egi]?`<button class="btn red" id="lDel">${DB.loaders[D.egi]?'Reset':'Hapus'}</button>`:''}<button class="btn ghost" id="lX">Batal</button><button class="btn acc" id="lOK">Simpan</button></div>`;
   if(keepScroll)d.scrollTop=sc;
+}
+let DH=null;
+function openHauler(egi){
+  MD.cap=MD.cap||{};
+  DH={isNew:!egi,egi:egi||'',unitsTxt:egi?UNITS().filter(u=>u[1]===egi).map(u=>u[0]).join(', '):'',cap:{}};
+  MATS.forEach(m=>{const v=egi?capOf(egi,m):'';DH.cap[m]=v});
+  const d=$('#dlg');drawHauler();d.showModal();d.onclose=()=>{DH=null};
+  d.oninput=e=>{if(!DH)return;const t=e.target;
+    if(t.id==='hEgi')DH.egi=t.value;else if(t.id==='hUnits')DH.unitsTxt=t.value;else if(t.dataset.ck)DH.cap[t.dataset.ck]=t.value};
+  d.onchange=e=>{if(!DH)return;if(e.target.id==='hCopy'&&e.target.value){const src=e.target.value;MATS.forEach(m=>DH.cap[m]=capOf(src,m));drawHauler()}};
+  d.onclick=e=>{if(!DH)return;const t=e.target.closest('button');if(!t)return;
+    if(t.id==='hX'){d.close();return}
+    if(t.id==='hOK'){saveHauler();return}
+    if(t.id==='hDel'){if(confirm('Hapus pengaturan tambahan '+DH.egi+'?')){const g=DH.egi;MATS.forEach(m=>delete MD.cap[g+'|'+m]);MD.units=MD.units.filter(u=>u[1]!==g);saveMD();d.close();renderAll();toast('Selesai')}}};
+}
+function drawHauler(){
+  const d=$('#dlg'),D=DH;
+  d.innerHTML=`<h3 style="margin:0 0 4px">${D.isNew?'Tambah Unit DT (Hauler)':'Ubah DT '+esc(D.egi)}</h3>
+  ${D.isNew?`<label>Salin kapasitas dari (opsional)</label><select id="hCopy"><option value="">— tidak —</option>${HEGIS().map(e=>'<option>'+esc(e)+'</option>').join('')}</select>
+  <label>Model DT (EGI)</label><input id="hEgi" value="${esc(D.egi)}" placeholder="mis. HD785" autocapitalize="characters">`:''}
+  <label>Kode unit (CN) — pisahkan dengan koma</label><textarea id="hUnits" rows="2" placeholder="HDT 801, HDT 802">${esc(D.unitsTxt)}</textarea>
+  <h3 style="margin:12px 0 6px">Kapasitas per material (BCM per rit)</h3>
+  <div class="grid g3">${MATS.map(m=>`<div><label style="margin-top:4px">${m}</label><input type="number" step="0.1" inputmode="decimal" data-ck="${m}" value="${esc(D.cap[m])}"></div>`).join('')}</div>
+  <p class="mut" style="margin:6px 0 0">Kapasitas ini otomatis terisi di Setup saat unit DT dipilih. Kosongkan material yang tidak dipakai.</p>
+  <div class="row" style="margin-top:14px">${!D.isNew?'<button class="btn red" id="hDel">Reset</button>':''}<button class="btn ghost" id="hX">Batal</button><button class="btn acc" id="hOK">Simpan</button></div>`;
+}
+function saveHauler(){
+  const D=DH,d=$('#dlg');const egi=String(D.egi).trim();
+  if(!egi){toast('Isi model DT (EGI)');return}
+  if(D.isNew&&LD(egi)){toast('EGI ini adalah Exca');return}
+  if(!MATS.some(m=>+D.cap[m]>0)){toast('Isi minimal satu kapasitas');return}
+  MD.cap=MD.cap||{};
+  MATS.forEach(m=>{const k=egi+'|'+m;if(+D.cap[m]>0)MD.cap[k]=+D.cap[m];else delete MD.cap[k]});
+  const list=D.unitsTxt.split(/[,\n;]+/).map(x=>x.trim()).filter(Boolean);
+  MD.units=MD.units.filter(u=>u[1]!==egi);
+  list.forEach(cn=>{if(!DB.units.some(u=>u[0].toLowerCase()===cn.toLowerCase()&&u[1]===egi)){MD.units=MD.units.filter(u=>u[0].toLowerCase()!==cn.toLowerCase());MD.units.push([cn,egi])}});
+  saveMD();d.close();renderAll();toast('Unit DT tersimpan');
 }
 function saveLoader(){
   const D=DR,d=$('#dlg');
@@ -513,7 +555,7 @@ function show(v){VIEW=v;document.querySelectorAll('main section').forEach(e=>e.c
 function renderHead(){const s=S(),I=s.info;$('#hsub').textContent=`${I.loaderCN||'Loader ?'} · ${I.pit} · ${I.date}`}
 function renderAll(){renderHead();show(VIEW)}
 document.addEventListener('click',e=>{
-  const t=e.target.closest('button,[data-e],[data-ml]');if(!t)return;const s=S();
+  const t=e.target.closest('button,[data-e],[data-ml],[data-mh]');if(!t)return;const s=S();
   if(t.dataset.v){show(t.dataset.v);return}
   if(t.id==='menuBtn'){openMenu();return}
   if(t.dataset.a){tapAct(t.dataset.a);return}
@@ -534,6 +576,8 @@ document.addEventListener('click',e=>{
   if(t.id==='xShare'){shareBoth();return}
   if(t.dataset.ml!==undefined){openLoader(t.dataset.ml);return}
   if(t.id==='mAddL'){openLoader(null);return}
+  if(t.dataset.mh!==undefined){openHauler(t.dataset.mh);return}
+  if(t.id==='mAddH'){openHauler(null);return}
   if(t.dataset.delu!==undefined){if(confirm('Hapus unit tambahan ini?')){MD.units.splice(+t.dataset.delu,1);saveMD();renderMaster()}return}
   if(t.id==='mExp'){download(new Blob([JSON.stringify({flaz_master:1,...MD},null,1)],{type:'application/json'}),'FLAZ_master_data.json');toast('Master data diunduh');return}
   if(t.id==='mImp'){$('#mFile').click();return}
