@@ -1,0 +1,768 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f172a">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<title>FLAZ Observer</title>
+<style>
+:root{--bg:#f1f5f9;--card:#fff;--ink:#0f172a;--mut:#64748b;--line:#e2e8f0;--pri:#0f172a;--acc:#f59e0b;--acc2:#b45309;
+--p:#2563eb;--pbg:#dbeafe;--s:#b45309;--sbg:#fef3c7;--i:#be123c;--ibg:#ffe4e6;--ok:#15803d;--okbg:#dcfce7}
+@media (prefers-color-scheme:dark){:root{--bg:#0b1220;--card:#162033;--ink:#e8eefb;--mut:#94a3b8;--line:#263451;--pri:#020617;--pbg:#1e3a8a;--p:#93c5fd;--sbg:#78350f;--s:#fcd34d;--ibg:#881337;--i:#fda4af;--okbg:#14532d;--ok:#86efac}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+body{padding-bottom:calc(68px + env(safe-area-inset-bottom))}
+header{position:sticky;top:0;z-index:5;background:var(--pri);color:#fff;display:flex;align-items:center;gap:10px;padding:10px 14px;padding-top:calc(10px + env(safe-area-inset-top))}
+header .t{flex:1;min-width:0}header b{font-size:17px;letter-spacing:.3px}header small{display:block;color:#cbd5e1;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+header button{background:#ffffff22;color:#fff;border:0;border-radius:10px;padding:8px 12px;font-size:15px}
+main{max-width:720px;margin:0 auto;padding:12px}
+section{display:none}section.on{display:block}
+nav{position:fixed;bottom:0;left:0;right:0;z-index:6;background:var(--card);border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;border:0;background:none;color:var(--mut);padding:9px 0 8px;font-size:11px;font-weight:600}
+nav button span{display:block;font-size:20px;line-height:1.1}nav button.on{color:var(--acc2)}
+@media (prefers-color-scheme:dark){nav button.on{color:var(--acc)}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:12px}
+.card h3{margin:0 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:.6px;color:var(--mut)}
+label{display:block;font-size:12.5px;color:var(--mut);margin:8px 0 3px;font-weight:600}
+input,select,textarea{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 11px;min-height:44px}
+input:focus,select:focus{outline:2px solid var(--acc);outline-offset:0}
+.row{display:flex;gap:8px}.row>*{flex:1;min-width:0}
+.btn{border:0;border-radius:12px;padding:12px 14px;font:inherit;font-weight:700;background:var(--pri);color:#fff;min-height:46px}
+.btn.acc{background:var(--acc);color:#1c1200}.btn.ghost{background:var(--bg);color:var(--ink);border:1px solid var(--line)}
+.btn.red{background:var(--ibg);color:var(--i)}.btn.sm{min-height:36px;padding:7px 11px;font-size:13px}
+.btn:active{transform:scale(.97)}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:8px 12px;font:inherit;font-weight:700;font-size:13.5px;min-height:40px}
+.chip.on{background:var(--pri);color:#fff;border-color:var(--pri)}
+.chip small{font-weight:500;opacity:.8}
+.chip b.bd{background:var(--acc);color:#1c1200;border-radius:9px;padding:0 6px;margin-left:5px;font-size:12px}
+.timer{text-align:center;padding:10px 8px}
+.timer .big{font:700 46px/1.05 ui-monospace,Menlo,Consolas,monospace;letter-spacing:-1px}
+.timer .act{font-weight:800;font-size:15px;margin-top:2px}
+.timer .meta{color:var(--mut);font-size:12.5px;margin-top:2px}
+.grid{display:grid;gap:8px}.g2{grid-template-columns:1fr 1fr}.g4{grid-template-columns:repeat(4,1fr)}.g3{grid-template-columns:repeat(3,1fr)}
+.ab{border:2px solid transparent;border-radius:14px;padding:6px 4px;font:inherit;text-align:center;line-height:1.15;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:64px}
+.ab b{font-size:20px;letter-spacing:.5px}.ab small{font-size:10.5px;font-weight:600;opacity:.85}
+.ab.P{background:var(--pbg);color:var(--p);min-height:92px}.ab.P b{font-size:26px}.ab.P small{font-size:12px}
+.ab.S{background:var(--sbg);color:var(--s)}.ab.I{background:var(--ibg);color:var(--i)}
+.ab.run{border-color:currentColor;box-shadow:0 0 0 3px color-mix(in srgb,currentColor 28%,transparent)}
+.ab:active{transform:scale(.96)}
+.cnt{display:flex;gap:8px;text-align:center}.cnt div{flex:1;background:var(--bg);border-radius:10px;padding:6px}.cnt b{display:block;font-size:19px}.cnt span{font-size:11px;color:var(--mut)}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{padding:6px 6px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left}th{font-size:11.5px;color:var(--mut);text-transform:uppercase;letter-spacing:.3px}
+.sc{overflow-x:auto;margin:0 -4px;padding:0 4px}
+tr.grp td{font-weight:800;background:var(--bg)}
+.bar{height:7px;border-radius:4px;background:var(--line);min-width:50px}.bar i{display:block;height:100%;border-radius:4px;background:var(--acc)}
+.kpi{display:grid;grid-template-columns:1fr 1fr;gap:8px}.kpi div{background:var(--bg);border-radius:12px;padding:9px 11px}
+.kpi b{display:block;font-size:21px}.kpi span{font-size:11.5px;color:var(--mut)}
+.logrow{display:flex;align-items:center;gap:8px;padding:9px 4px;border-bottom:1px solid var(--line);font-size:13.5px}
+.logrow .c{font-weight:800;min-width:30px;text-align:center;border-radius:8px;padding:3px 0;font-size:13px}
+.logrow .c.P{background:var(--pbg);color:var(--p)}.logrow .c.S{background:var(--sbg);color:var(--s)}.logrow .c.I{background:var(--ibg);color:var(--i)}
+.logrow .m{flex:1;min-width:0}.logrow .m small{color:var(--mut);display:block}
+.vd{border-radius:14px;padding:12px;margin-bottom:12px;font-size:13.5px}.vd .vt{font-size:21px;font-weight:800;letter-spacing:.3px}.vd .mut{color:inherit;opacity:.85}
+.vd.under{background:var(--ibg);color:var(--i)}.vd.pas{background:var(--pbg);color:var(--p)}.vd.over{background:var(--okbg);color:var(--ok)}
+.mut{color:var(--mut);font-size:12.5px}.warn{background:var(--sbg);color:var(--s);border-radius:10px;padding:8px 10px;font-size:13px;margin-bottom:10px}
+dialog{border:0;border-radius:16px;padding:14px;width:min(94vw,460px);background:var(--card);color:var(--ink);max-height:88vh}
+dialog::backdrop{background:#0008}
+#toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#0f172af0;color:#fff;padding:9px 15px;border-radius:999px;font-size:13.5px;z-index:20;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw;text-align:center}
+#toast.on{opacity:1}
+.hrow{display:grid;grid-template-columns:1fr 1fr 78px 38px;gap:6px;align-items:end;margin-bottom:6px}
+.hrow input{padding:8px;min-height:40px}
+</style>
+</head>
+<body>
+<header><div class="t"><b>FLAZ Observer</b><small id="hsub">Observasi Cycle Time</small></div><button id="menuBtn">☰ Sesi</button></header>
+<main>
+<section id="v-setup"></section>
+<section id="v-obs"></section>
+<section id="v-log"></section>
+<section id="v-res"></section>
+<section id="v-master"></section>
+</main>
+<nav>
+<button data-v="setup"><span>⚙️</span>Setup</button>
+<button data-v="obs"><span>⏱️</span>Observasi</button>
+<button data-v="log"><span>📋</span>Log</button>
+<button data-v="res"><span>📊</span>Hasil</button>
+<button data-v="master"><span>🗂️</span>Master</button>
+</nav>
+<dialog id="dlg"></dialog>
+<div id="toast"></div>
+
+<script>
+/* ============ DATABASE (dari sheet "db" pada Excel master FLAZ) ============ */
+const DB = {"loaders": {"PC2000": {"bucket": 12, "fc": 128, "maxfc": 240}, "EX1900": {"bucket": 11.6, "fc": 110, "maxfc": 210}, "PC1250": {"bucket": 7.5, "fc": 98, "maxfc": 187}, "EX1200": {"bucket": 7.1, "fc": 95, "maxfc": 187}, "CAT395": {"bucket": 7, "fc": 85, "maxfc": 167}, "DX1000": {"bucket": 6.8, "fc": 85, "maxfc": 167}, "EC950": {"bucket": 6.42, "fc": 85, "maxfc": 167}, "DX800": {"bucket": 5.58, "fc": 70, "maxfc": 140}, "EC480": {"bucket": 2.7, "fc": 40, "maxfc": 85}, "SY500": {"bucket": 2.7, "fc": 40, "maxfc": 85}, "PC400": {"bucket": 2.5, "fc": 35, "maxfc": 73}, "PC300": {"bucket": 1.8, "fc": 30, "maxfc": 65}, "PC200": {"bucket": 1, "fc": 25, "maxfc": 55}, "SY1250H": {"bucket": 8, "fc": 97, "maxfc": 194}}, "units": [["HEX 1205", "PC1250"], ["HEX 1206", "EC950"], ["HEX 1207", "CAT395"], ["HEX 1208", "CAT395"], ["HEX 901", "EC950"], ["HEX 418", "PC400"], ["HEX 422", "EC480"], ["HEX 423", "EC480"], ["HEX 426", "EC480"], ["HEX 436", "EC480"], ["HEX 437", "EC480"], ["HEX 438", "EC480"], ["HEX 439", "EC480"], ["HEX 440", "EC480"], ["HEX 443", "EC480"], ["HEX 444", "SY500"], ["HEX 445", "SY500"], ["HEX 446", "SY500"], ["HEX 206", "PC200"], ["HEX 207", "PC200"], ["HEX 212", "PC200"], ["HEX 214", "PC200"], ["HEX 215", "PC200"], ["HEX 216", "PC200"], ["HEX 217", "PC200"], ["ODT02", "SKT105S_BP"], ["ODT06", "SKT105S_BP"], ["ODT10", "SKT105S_BP"], ["ODT12", "SKT105S_BP"], ["HDT 132", "P360"], ["HDT 133", "P360"], ["HDT 134", "P360"], ["HDT 135", "P360"], ["HDT 136", "P360"], ["HDT 137", "P360"], ["HDT 138", "P360"], ["HDT 139", "P360"], ["HDT 140", "P360"], ["HDT 142", "P360"], ["HDT 143", "P360"], ["HDT 154", "P360"], ["HDT 155", "P360"], ["HDT 156", "P360"], ["HDT 157", "P360"], ["HDT 158", "P360"], ["HDT 159", "P360"], ["HDT 160", "P360"], ["HDT 161", "P360"], ["ODT04", "SKT105S_BP"], ["ODT07", "SKT105S_BP"], ["HDT 233", "FMX400"], ["HDT 234", "FMX400"], ["HDT 235", "FMX400"], ["HDT 258", "FMX400"], ["HDT 259", "FMX400"], ["HDT 260", "FMX400"], ["HDT 261", "FMX400"], ["HDT 262", "FMX400"], ["HDT 263", "FMX400"], ["HDT 264", "FMX400"], ["HDT 265", "FMX400"], ["HDT 266", "FMX400"], ["HDT 267", "FMX400"], ["HDT 268", "FMX400"], ["HDT 305", "KR440"], ["HDT 306", "KR440"], ["HDT 307", "KR440"], ["HDT 308", "KR440"], ["HDT 309", "KR440"], ["HDT 310", "KR440"], ["HDT 311", "KR440"], ["HDT 312", "KR440"], ["HDT 313", "KR440"], ["HDT 314", "KR440"], ["HDT 315", "KR440"], ["HDT 316", "KR440"], ["HDT 701", "OHT777"], ["HDT 702", "OHT777"], ["HDT 703", "OHT777"], ["HDT 704", "OHT777"], ["HDT 736", "OHT777"], ["HDT 737", "OHT777"], ["HDT 738", "OHT777"], ["HDT 739", "OHT777"], ["HDT 740", "OHT777"], ["HDT 741", "OHT777"], ["HDT 744", "OHT777"], ["HDT 745", "OHT777"], ["HDT 732", "R100"], ["HDT 733", "R100"], ["HDT 734", "R100"], ["HDT 735", "R100"], ["HDT 742", "R100"], ["HDT 743", "R100"], ["DT 07", "P360"], ["DT 08", "P360"], ["DT 09", "P360"], ["DT 10", "P360"], ["DT 11", "P360"], ["DT 12", "P360"], ["DT 13", "P360"], ["DT 14", "P360"], ["DT 15", "P360"], ["DT 16", "P360"], ["DT 17", "P360"], ["DT 18", "P360"], ["DT 19", "FMX400"], ["DT 20", "FMX400"], ["DT 21", "FMX400"], ["DT 22", "FMX400"], ["DT 23", "FMX400"], ["DT 24", "FMX400"], ["FJT 001", "FM260JD"], ["FJT 002", "FM260JD"], ["FJT 003", "FM260JD"], ["FJT 004", "FM260JD"], ["FJT 005", "FM260JD"], ["FJT 006", "FM260JD"], ["FJT 007", "FM260JD"], ["FJT 008", "FM260JD"], ["FJT 009", "FM260JD"], ["FJT 010", "FM260JD"], ["BMS058", "FM260JD"], ["BMS059", "FM260JD"], ["BMS060", "FM260JD"], ["BMS061", "FM260JD"], ["BMS062", "FM260JD"]], "std": {"PC2000|TS": {"DL": 10, "SL": 7, "DU": 5, "SE": 5, "PO": 1, "DP": 0, "CO": 0, "WD": 4.53012048192771, "TV": 0, "ff": 0.925, "pdty": 940}, "SY1250H|TS": {"DL": 10, "SL": 7, "DU": 5, "SE": 5, "PO": 1, "DP": 0, "CO": 0, "WD": 4.53012048192771, "TV": 0, "ff": 0.925, "pdty": 630}, "PC1250|TS": {"DL": 9, "SL": 6, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 3.9156626506024104, "TV": 0, "ff": 0.925, "pdty": 660}, "EX1200|TS": {"DL": 8, "SL": 6, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 3.710843373493976, "TV": 0, "ff": 0.925, "pdty": 660}, "CAT395|TS": {"DL": 8, "SL": 6, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 3.710843373493976, "TV": 0, "ff": 0.925, "pdty": 650}, "DX1000|TS": {"DL": 8, "SL": 6, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 3.710843373493976, "TV": 0, "ff": 0.925, "pdty": 630}, "EC950|TS": {"DL": 8, "SL": 6, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 3.710843373493976, "TV": 0, "ff": 0.925, "pdty": 590}, "DX800|TS": {"DL": 7, "SL": 6, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 3.506024096385545, "TV": 0, "ff": 0.925, "pdty": 540}, "EC480|TS": {"DL": 6, "SL": 5, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 3.096385542168676, "TV": 0, "ff": 0.925, "pdty": 290}, "SY500|TS": {"DL": 6, "SL": 5, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 3.096385542168676, "TV": 0, "ff": 0.925, "pdty": 290}, "PC400|TS": {"DL": 6, "SL": 5, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 3.096385542168676, "TV": 0, "ff": 0.925, "pdty": 270}, "PC300|TS": {"DL": 5, "SL": 4, "DU": 5, "SE": 3, "PO": 1, "DP": 0, "CO": 0, "WD": 2.481927710843376, "TV": 0, "ff": 0.925, "pdty": 230}, "PC200|TS": {"DL": 5, "SL": 4, "DU": 5, "SE": 3, "PO": 1, "DP": 0, "CO": 0, "WD": 2.481927710843376, "TV": 0, "ff": 0.925, "pdty": 130}, "PC2000|OB": {"DL": 10, "SL": 7, "DU": 5, "SE": 5, "PO": 1, "DP": 0, "CO": 0, "WD": 4.734939759036145, "TV": 0, "ff": 0.89, "pdty": 910}, "SY1250H|OB": {"DL": 9, "SL": 7, "DU": 5, "SE": 5, "PO": 1, "DP": 0, "CO": 0, "WD": 4.734939759036145, "TV": 0, "ff": 0.89, "pdty": 630}, "PC1250|OB": {"DL": 9, "SL": 6, "DU": 5, "SE": 5, "PO": 1, "DP": 0, "CO": 0, "WD": 5.12048192771084, "TV": 0, "ff": 0.89, "pdty": 610}, "EX1200|OB": {"DL": 8, "SL": 6, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 3.9156626506024104, "TV": 0, "ff": 0.89, "pdty": 630}, "CAT395|OB": {"DL": 8, "SL": 6, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 3.9156626506024104, "TV": 0, "ff": 0.89, "pdty": 620}, "DX1000|OB": {"DL": 8, "SL": 6, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 3.9156626506024104, "TV": 0, "ff": 0.89, "pdty": 600}, "EC950|OB": {"DL": 8, "SL": 6, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 3.9156626506024104, "TV": 0, "ff": 0.89, "pdty": 570}, "DX800|OB": {"DL": 7, "SL": 6, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 3.710843373493976, "TV": 0, "ff": 0.89, "pdty": 520}, "EC480|OB": {"DL": 6, "SL": 5, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 3.3012048192771104, "TV": 0, "ff": 0.89, "pdty": 280}, "SY500|OB": {"DL": 6, "SL": 5, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 3.3012048192771104, "TV": 0, "ff": 0.89, "pdty": 280}, "PC400|OB": {"DL": 6, "SL": 5, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 3.3012048192771104, "TV": 0, "ff": 0.89, "pdty": 260}, "PC300|OB": {"DL": 5, "SL": 4, "DU": 5, "SE": 3, "PO": 1, "DP": 0, "CO": 0, "WD": 2.686746987951807, "TV": 0, "ff": 0.89, "pdty": 220}, "PC200|OB": {"DL": 5, "SL": 4, "DU": 5, "SE": 3, "PO": 1, "DP": 0, "CO": 0, "WD": 2.686746987951807, "TV": 0, "ff": 0.89, "pdty": 120}, "PC2000|MD": {"DL": 10, "SL": 7, "DU": 5, "SE": 5, "PO": 2, "DP": 1, "CO": 0, "WD": 3.5301204819277103, "TV": 2, "ff": 0.725, "pdty": 880}, "SY1250H|MD": {"DL": 10, "SL": 7, "DU": 5, "SE": 5, "PO": 2, "DP": 1, "CO": 0, "WD": 3.5301204819277103, "TV": 2, "ff": 0.725, "pdty": 580}, "PC1250|MD": {"DL": 9, "SL": 6, "DU": 5, "SE": 4, "PO": 2, "DP": 1, "CO": 0, "WD": 2.9156626506024104, "TV": 2, "ff": 0.725, "pdty": 620}, "EX1200|MD": {"DL": 8, "SL": 6, "DU": 5, "SE": 4, "PO": 2, "DP": 1, "CO": 0, "WD": 2.710843373493976, "TV": 2, "ff": 0.725, "pdty": 610}, "CAT395|MD": {"DL": 8, "SL": 6, "DU": 5, "SE": 4, "PO": 2, "DP": 1, "CO": 0, "WD": 2.710843373493976, "TV": 2, "ff": 0.725, "pdty": 600}, "DX1000|MD": {"DL": 8, "SL": 6, "DU": 5, "SE": 4, "PO": 2, "DP": 1, "CO": 0, "WD": 2.710843373493976, "TV": 2, "ff": 0.725, "pdty": 580}, "EC950|MD": {"DL": 8, "SL": 6, "DU": 5, "SE": 4, "PO": 2, "DP": 1, "CO": 0, "WD": 2.710843373493976, "TV": 2, "ff": 0.725, "pdty": 550}, "DX800|MD": {"DL": 7, "SL": 6, "DU": 5, "SE": 4, "PO": 2, "DP": 1, "CO": 0, "WD": 2.506024096385545, "TV": 3, "ff": 0.725, "pdty": 500}, "EC480|MD": {"DL": 6, "SL": 5, "DU": 5, "SE": 4, "PO": 2, "DP": 1, "CO": 0, "WD": 2.096385542168676, "TV": 4, "ff": 0.725, "pdty": 270}, "SY500|MD": {"DL": 6, "SL": 5, "DU": 5, "SE": 4, "PO": 2, "DP": 1, "CO": 0, "WD": 2.096385542168676, "TV": 5, "ff": 0.725, "pdty": 270}, "PC400|MD": {"DL": 6, "SL": 5, "DU": 5, "SE": 4, "PO": 2, "DP": 1, "CO": 0, "WD": 2.096385542168676, "TV": 6, "ff": 0.725, "pdty": 250}, "PC300|MD": {"DL": 5, "SL": 4, "DU": 5, "SE": 3, "PO": 2, "DP": 1, "CO": 0, "WD": 1.481927710843376, "TV": 7, "ff": 0.725, "pdty": 210}, "PC200|MD": {"DL": 5, "SL": 4, "DU": 5, "SE": 3, "PO": 2, "DP": 1, "CO": 0, "WD": 1.481927710843376, "TV": 8, "ff": 0.725, "pdty": 120}, "PC2000|ON": {"DL": 11, "SL": 7, "DU": 5, "SE": 5, "PO": 1, "DP": 0, "CO": 0, "WD": 4.734939759036145, "TV": 0, "ff": 0.925, "pdty": 910}, "SY1250H|ON": {"DL": 11, "SL": 7, "DU": 5, "SE": 5, "PO": 1, "DP": 0, "CO": 0, "WD": 4.734939759036145, "TV": 0, "ff": 0.925, "pdty": 610}, "PC1250|ON": {"DL": 10, "SL": 6, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 4.120481927710845, "TV": 0, "ff": 0.925, "pdty": 640}, "EX1200|ON": {"DL": 9, "SL": 6, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 3.9156626506024104, "TV": 0, "ff": 0.925, "pdty": 630}, "CAT395|ON": {"DL": 9, "SL": 6, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 3.9156626506024104, "TV": 0, "ff": 0.925, "pdty": 620}, "DX1000|ON": {"DL": 9, "SL": 6, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 3.9156626506024104, "TV": 0, "ff": 0.925, "pdty": 600}, "EC950|ON": {"DL": 9, "SL": 6, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 3.9156626506024104, "TV": 0, "ff": 0.925, "pdty": 570}, "DX800|ON": {"DL": 9, "SL": 6, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 3.9156626506024104, "TV": 0, "ff": 0.925, "pdty": 490}, "EC480|ON": {"DL": 9, "SL": 5, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 3.710843373493976, "TV": 0, "ff": 0.925, "pdty": 250}, "SY500|ON": {"DL": 10, "SL": 5, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 3.9156626506024104, "TV": 0, "ff": 0.925, "pdty": 240}, "PC400|ON": {"DL": 11, "SL": 5, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 4.120481927710845, "TV": 0, "ff": 0.925, "pdty": 210}, "PC300|ON": {"DL": 11, "SL": 4, "DU": 5, "SE": 3, "PO": 1, "DP": 0, "CO": 0, "WD": 3.710843373493976, "TV": 0, "ff": 0.925, "pdty": 170}, "PC200|ON": {"DL": 12, "SL": 4, "DU": 5, "SE": 3, "PO": 1, "DP": 0, "CO": 0, "WD": 3.9156626506024104, "TV": 0, "ff": 0.925, "pdty": 90}, "PC2000|CC": {"DL": 12, "SL": 7, "DU": 5, "SE": 5, "PO": 1, "DP": 0, "CO": 0, "WD": 4.939759036144579, "TV": 0, "ff": 0.775, "pdty": 830}, "SY1250H|CC": {"DL": 12, "SL": 7, "DU": 5, "SE": 5, "PO": 1, "DP": 0, "CO": 0, "WD": 4.939759036144579, "TV": 0, "ff": 0.775, "pdty": 560}, "PC1250|CC": {"DL": 11, "SL": 6, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 4.325301204819279, "TV": 0, "ff": 0.775, "pdty": 580}, "EX1200|CC": {"DL": 10, "SL": 6, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 4.120481927710845, "TV": 0, "ff": 0.775, "pdty": 570}, "CAT395|CC": {"DL": 10, "SL": 6, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 4.120481927710845, "TV": 0, "ff": 0.775, "pdty": 560}, "DX1000|CC": {"DL": 10, "SL": 6, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 4.120481927710845, "TV": 0, "ff": 0.775, "pdty": 550}, "EC950|CC": {"DL": 10, "SL": 6, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 4.120481927710845, "TV": 0, "ff": 0.775, "pdty": 520}, "DX800|CC": {"DL": 10, "SL": 6, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 4.120481927710845, "TV": 0, "ff": 0.775, "pdty": 450}, "EC480|CC": {"DL": 10, "SL": 5, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 3.9156626506024104, "TV": 0, "ff": 0.775, "pdty": 230}, "SY500|CC": {"DL": 11, "SL": 5, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 4.120481927710845, "TV": 0, "ff": 0.775, "pdty": 220}, "PC400|CC": {"DL": 12, "SL": 5, "DU": 5, "SE": 4, "PO": 1, "DP": 0, "CO": 0, "WD": 4.325301204819279, "TV": 0, "ff": 0.775, "pdty": 190}, "PC300|CC": {"DL": 12, "SL": 4, "DU": 5, "SE": 3, "PO": 1, "DP": 0, "CO": 0, "WD": 3.9156626506024104, "TV": 0, "ff": 0.775, "pdty": 150}, "PC200|CC": {"DL": 13, "SL": 4, "DU": 5, "SE": 3, "PO": 1, "DP": 0, "CO": 0, "WD": 4.120481927710845, "TV": 0, "ff": 0.775, "pdty": 80}}, "cap": {"SKT105S_BP|OB": 25, "FMX400|OB": 11, "KR440|OB": 11, "OHT777|OB": 43, "R100|OB": 43, "FM260JD|OB": 8.5, "SKT105S_BP|TS": 8.5, "FMX400|TS": 8.5, "KR440|TS": 8.5, "OHT777|TS": 31.8, "R100|TS": 31.8, "FM260JD|TS": 6.6, "SKT105S_BP|MD": 6.6, "FMX400|MD": 6.6, "KR440|MD": 6.6, "OHT777|MD": 25, "R100|MD": 25, "FM260JD|MD": 5.1, "SKT105S_BP|CC": 222}, "mat": {"TS": {"sf": 1.3, "ff": 0.925}, "OB": {"sf": 1.3, "ff": 0.89}, "MD": {"sf": 1.1, "ff": 0.725}, "ON": {"sf": 1.3, "ff": 0.925}, "CC": {"sf": 1.15, "ff": 0.775}}, "weather": ["Hujan", "Gerimis", "After Slippery", "Kering", "Basah Bukan Karena Hujan"], "pit": ["TAKALOT", "NORTH G", "NORTH F", "Other"], "ffgrades": [["A", "Easy Loading", 1.15], ["BU", "Average Up Loading", 1.05], ["B", "Average Loading", 0.925], ["BB", "Average Bottom Loading", 0.825], ["C", "Rather Difficult Loading", 0.775], ["D", "Difficult Loading", 0.725]]};
+
+/* ============ KONSTANTA ============ */
+const ACTS = {
+  DL:{n:'DIG TO LOAD',s:'Gali',g:'P',f:1},   SL:{n:'SWING (LOADED)',s:'Swing isi',g:'P',f:.8},
+  DU:{n:'DUMP',s:'Tumpah',g:'P',f:.4},       SE:{n:'SWING (EMPTY)',s:'Swing kosong',g:'P',f:.4},
+  TV:{n:'TRAVEL',s:'Travel',g:'S',f:.1},     PO:{n:'POSITIONING',s:'Posisi',g:'S',f:.5},
+  DP:{n:'DIG TO PREPARE',s:'Gali siap',g:'S',f:.4}, WD:{n:'WAIT TO DUMP',s:'Tunggu',g:'S',f:.05},
+  IR:{n:'IDLE - RAIN',s:'Hujan',g:'I',f:.1}, IS:{n:'IDLE - SLIPPERY',s:'Licin',g:'I',f:.1},
+  CO:{n:'DELAY - CHANGE OPERATOR',s:'Ganti opr',g:'I',f:.1}
+};
+const PRIM=['DL','SL','DU','SE'], SEC=['TV','PO','DP','WD'], IDLE=['IR','IS','CO'];
+const FFG = DB.ffgrades.map(g=>({k:g[0],n:g[1],v:g[2]}));
+const KEY='flaz.observer.v1';
+
+/* ============ UTIL ============ */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const r2=(x,d=2)=>{const p=10**d;return Math.round((+x+Number.EPSILON)*p)/p};
+const pad=n=>String(n).padStart(2,'0');
+const fT=ms=>{const d=new Date(ms);return pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds())};
+const fDur=s=>{s=Math.max(0,s);const m=Math.floor(s/60);return pad(m)+':'+(s%60).toFixed(1).padStart(4,'0')};
+const fN=(x,d=2)=>x==null||isNaN(x)||!isFinite(x)?'-':r2(x,d).toLocaleString('id-ID',{minimumFractionDigits:0,maximumFractionDigits:d});
+const fP=x=>x==null||isNaN(x)||!isFinite(x)?'-':(x*100).toFixed(1).replace('.',',')+'%';
+const today=()=>{const d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())};
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),1800)}
+function buzz(n=25){try{navigator.vibrate&&navigator.vibrate(n)}catch(e){}}
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+/* ---- Master data tambahan (disimpan di HP, menimpa/menambah database bawaan) ---- */
+const MKEY='flaz.master.v1';
+let MD={units:[],loaders:{},std:{}};
+try{const r=localStorage.getItem(MKEY);if(r)MD=Object.assign(MD,JSON.parse(r))}catch(e){}
+const saveMD=()=>{try{localStorage.setItem(MKEY,JSON.stringify(MD))}catch(e){}};
+const LOADERS=()=>({...DB.loaders,...MD.loaders});
+const LD=e=>MD.loaders[e]||DB.loaders[e]||null;
+const STD=(e,m)=>MD.std[e+'|'+m]||DB.std[e+'|'+m]||null;
+const UNITS=()=>[...MD.units,...DB.units.filter(u=>!MD.units.some(m=>m[0].toLowerCase()===u[0].toLowerCase()))];
+const egiOf=cn=>{const k=String(cn||'').trim().toLowerCase();const u=UNITS().find(x=>x[0].toLowerCase()===k);return u?u[1]:''};
+const isLoaderEgi=e=>!!LD(e);
+const capOf=(egi,mat)=>DB.cap[egi+'|'+mat]??'';
+
+/* ============ STATE ============ */
+let ST={sessions:{},cur:null};
+function load(){try{const r=localStorage.getItem(KEY);if(r)ST=JSON.parse(r)}catch(e){}
+  if(!ST.cur||!ST.sessions[ST.cur]){const k=Object.keys(ST.sessions);ST.cur=k.length?k[k.length-1]:null}
+  if(!ST.cur)newSession()}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(ST))}catch(e){}}
+function newSession(from){
+  const id=uid();const m='TS';
+  const base=from?JSON.parse(JSON.stringify(from)):null;
+  ST.sessions[id]={id,created:Date.now(),
+    info:base?{...base.info,date:today()}:{date:today(),pit:DB.pit[0],weather:DB.weather[3],material:m,sf:DB.mat[m].sf,loaderCN:'',loaderEGI:'',bucket:'',distance:'',observer:'',note:'',angSLplan:75,angSEplan:75,angSL:'',angSE:'',target:'',targetManual:false,tol:5},
+    haulers:base?base.haulers:[{cn:'',egi:'',cap:''}],
+    segs:[],open:null,curH:0,ritNo:{},ff:DB.mat[m].ff,hist:[]};
+  ST.cur=id;save();return ST.sessions[id]}
+const S=()=>ST.sessions[ST.cur];
+
+/* ============ PERHITUNGAN (meniru rumus sheet Data & Report) ============ */
+function calc(s){
+  const I=s.info, sf=+I.sf||1, bucket=+I.bucket||0, dist=+I.distance||0;
+  const segs=[...s.segs].sort((a,b)=>a.start-b.start);
+  const A={};[...PRIM,...SEC,...IDLE].forEach(c=>A[c]={n:0,sec:0});
+  segs.forEach(g=>{A[g.act].n++;A[g.act].sec+=g.dur});
+  const sumG=l=>l.reduce((t,c)=>t+A[c].sec,0);
+  const totSec=sumG(PRIM)+sumG(SEC)+sumG(IDLE);
+  const totMin=totSec/60;
+  const du=segs.filter(g=>g.act==='DU');
+  const ffs=du.map(g=>g.ff).filter(v=>v>0);
+  const avgFF=ffs.length?ffs.reduce((a,b)=>a+b,0)/ffs.length:null;
+  // rit
+  const rm={};
+  segs.forEach(g=>{const k=g.h+'|'+g.rit;(rm[k]=rm[k]||{h:g.h,rit:g.rit,segs:[]}).segs.push(g)});
+  const rits=Object.values(rm).filter(r=>r.segs.some(g=>PRIM.includes(g.act))).map(r=>{r.start=r.segs[0].start;r.end=Math.max(...r.segs.map(g=>g.start+g.dur*1000));
+    r.load=r.segs.filter(g=>PRIM.includes(g.act)).reduce((t,g)=>t+g.dur,0);
+    r.pass=r.segs.filter(g=>g.act==='DU').length;
+    r.po=r.segs.filter(g=>g.act==='PO').reduce((t,g)=>t+g.dur,0);
+    r.done=r.rit<(s.ritNo[r.h]||1);return r}).sort((a,b)=>a.start-b.start);
+  const hs=s.haulers.map((h,i)=>{
+    const rs=rits.filter(r=>r.h===i).sort((a,b)=>a.rit-b.rit);
+    const dn=rs.filter(r=>r.done);
+    const n=dn.length;
+    const ints=[];for(let k=1;k<rs.length;k++){if(rs[k-1].done)ints.push((rs[k].start-rs[k-1].start)/1000)}
+    rs.forEach((r,k)=>{r.ct=k>0&&rs[k-1].done?(r.start-rs[k-1].start)/1000:null});
+    const pass=dn.reduce((t,r)=>t+r.pass,0);
+    const load=n?dn.reduce((t,r)=>t+r.load,0)/n/60:0;
+    const ct=ints.length?ints.reduce((a,b)=>a+b,0)/ints.length/60:0;
+    const travel=ct>0?Math.max(0,ct-load):0;
+    const wait=dn.reduce((t,r)=>t+r.po,0)/60;
+    const speed=travel>0&&dist>0?(dist/1000)/(travel/60)*2:0;
+    const cap=+h.cap||0;
+    return {i,cn:h.cn||('H'+(i+1)),egi:h.egi,cap,n,open:rs.length-n,avgPass:n?pass/n:0,load,travel,wait,ct,speed,prod:n*cap,nct:ints.length};
+  });
+  const used=hs.filter(h=>h.n>0);
+  const sumN=used.reduce((t,h)=>t+h.n,0);
+  const avgOf=k=>{const l=used.filter(h=>h[k]>0);return l.length?l.reduce((t,h)=>t+h[k],0)/l.length:0};
+  const hT={n:sumN,avgPass:avgOf('avgPass'),load:avgOf('load'),travel:avgOf('travel'),wait:used.reduce((t,h)=>t+h.wait,0),ct:avgOf('ct'),speed:avgOf('speed'),prod:used.reduce((t,h)=>t+h.prod,0)};
+  // loader
+  const std=STD(I.loaderEGI,I.material);
+  const ld=LD(I.loaderEGI);
+  const firstCap=(s.haulers.find(h=>+h.cap>0)||{}).cap;
+  const planPass=firstCap&&bucket?Math.ceil(+firstCap/(bucket/sf)):null;
+  const passes=du.length;
+  const prod=passes&&bucket&&avgFF?passes*bucket/sf*avgFF:null;
+  const pdty=prod!=null&&totMin>0?prod/totMin*60:null;
+  let fuel=0;if(ld){Object.keys(A).forEach(c=>{fuel+=A[c].sec*ACTS[c].f*ld.maxfc/3600})}
+  const fuelH=ld&&totMin>0?fuel/(totMin/60):null;
+  const ratio=fuelH!=null&&pdty>0?fuelH/pdty:null;
+  const target=+I.target>0?+I.target:null, tolr=(I.tol===''||I.tol==null||isNaN(+I.tol)?5:+I.tol)/100;
+  let verdict=null;
+  if(target&&pdty!=null){const gap=pdty-target,pct=gap/target;const k=pct<-tolr?'under':pct>tolr?'over':'pas';
+    const ph=used.filter(h=>h.ct>0&&h.cap>0).map(h=>h.cap*60/h.ct);const perH=ph.length?ph.reduce((a,b)=>a+b,0)/ph.length:null;
+    verdict={k,target,gap,pct,tol:tolr*100,text:{under:'UNDER HAULER',pas:'HAULER SUDAH PAS',over:'OVER - GOOD JOB'}[k],
+      note:{under:'Produktivitas di bawah target: jumlah/ritme hauler kurang.',pas:'Produktivitas sesuai target: jumlah hauler sudah pas.',over:'Produktivitas melebihi target. Pertahankan!'}[k],
+      perH,need:(k==='under'&&perH&&Math.ceil(target/perH)>used.length)?Math.ceil(target/perH):null,have:used.length}}
+  const planPrimSec=std?PRIM.reduce((t,c)=>t+(std[c]||0),0):null;
+  const plan={pass:planPass,ff:std?std.ff:null,load:std&&planPass?planPass*planPrimSec/60:null,pdty:std?std.pdty:null,
+    prod:std&&totMin>0?std.pdty*totMin/60:null,fuelH:ld?ld.fc:null,fuel:ld&&totMin>0?ld.fc*totMin/60:null,ratio:ld&&std?ld.fc/std.pdty:null};
+  const act=c=>{const p=std?std[c]:null;const a=A[c];return{c,n:a.n,plan:p,avg:a.n?a.sec/a.n:0,planMin:p!=null&&planPass?p*planPass/60:null,min:a.sec/60,pctA:totSec?a.sec/totSec:0}};
+  const rows=[...PRIM,...SEC,...IDLE].map(act);
+  const pm=PRIM.reduce((t,c)=>t+(std?(std[c]||0)*(planPass||0)/60:0),0), sm=SEC.reduce((t,c)=>t+(std&&std[c]?std[c]*(planPass||0)/60:0),0);
+  const planTot=pm+sm;
+  rows.forEach(r=>{r.pctP=std&&planTot&&r.planMin!=null?r.planMin/planTot:null});
+  const startMs=segs.length?segs[0].start:null, stopMs=segs.length?Math.max(...segs.map(g=>g.start+g.dur*1000)):null;
+  return {verdict,target,I,sf,bucket,dist,segs,A,rows,totSec,totMin,primMin:sumG(PRIM)/60,secMin:sumG(SEC)/60,idleMin:sumG(IDLE)/60,
+    passes,avgFF,avgPassHauler:hT.avgPass,avgLoad:hT.load,prod,pdty,fuel,fuelH,ratio,plan,planPass,std,ld,hs,hT,rits,startMs,stopMs,hasStd:!!std,
+    openRits:rits.filter(r=>!r.done).length};
+}
+
+/* ============ AKSI OBSERVASI ============ */
+function closeOpen(s,now){
+  const o=s.open;if(!o)return null;
+  const seg={id:uid(),h:o.h,act:o.act,start:o.start,dur:r2((now-o.start)/1000,1),ff:o.ff||null,rit:o.rit,pass:o.pass};
+  s.segs.push(seg);s.open=null;return seg}
+function tapAct(code){
+  const s=S();if(!s.haulers.length||!s.haulers[s.curH]){toast('Tambahkan hauler di Setup');return}
+  if(s.open&&s.open.act===code&&s.open.h===s.curH){toast(ACTS[code].n+' sudah berjalan');return}
+  const now=Date.now();const h=s.curH;
+  if(!s.ritNo[h])s.ritNo[h]=1;
+  const prevOpen=s.open?{...s.open}:null;
+  const closed=closeOpen(s,now);
+  const rit=s.ritNo[h];
+  const duCount=s.segs.filter(g=>g.h===h&&g.rit===rit&&g.act==='DU').length;
+  const pass=code==='SE'?Math.max(duCount,1):duCount+1;
+  s.open={h,act:code,start:now,rit,pass,ff:code==='DU'?s.ff:null};
+  s.hist.push({t:'act',seg:closed?closed.id:null,prev:prevOpen});
+  save();buzz();refreshObs()}
+function stopAct(endRit){
+  const s=S();const h=s.curH;
+  if(!s.open&&!endRit){toast('Tidak ada aktivitas berjalan');return}
+  const now=Date.now();const prevOpen=s.open?{...s.open}:null;
+  const hh=s.open?s.open.h:h;
+  const closed=closeOpen(s,now);
+  let did=false,ritH=null;
+  if(endRit){const has=s.segs.some(g=>g.h===hh&&g.rit===(s.ritNo[hh]||1));
+    if(has){s.ritNo[hh]=(s.ritNo[hh]||1)+1;did=true;ritH=hh;toast('Rit '+(s.haulers[hh].cn||'H'+(hh+1))+' selesai')}else toast('Belum ada data rit ini')}
+  s.hist.push({t:'end',seg:closed?closed.id:null,prev:prevOpen,rit:did?ritH:null});
+  save();buzz(40);refreshObs()}
+function undo(){
+  const s=S();const a=s.hist.pop();if(!a){toast('Tidak ada yang di-undo');return}
+  if(a.t==='act'){s.open=null}
+  if(a.t==='end'&&a.rit!=null){s.ritNo[a.rit]=Math.max(1,(s.ritNo[a.rit]||1)-1)}
+  if(a.seg){const i=s.segs.findIndex(g=>g.id===a.seg);if(i>=0)s.segs.splice(i,1)}
+  if(a.prev)s.open=a.prev;
+  save();toast('Dibatalkan');refreshObs()}
+function closeAllRits(){const s=S();stopAct(false);
+  s.haulers.forEach((h,i)=>{const r=s.ritNo[i]||1;if(s.segs.some(g=>g.h===i&&g.rit===r))s.ritNo[i]=r+1});
+  s.hist=[];save();renderAll();toast('Semua rit berjalan ditutup')}
+
+/* ============ VIEW: SETUP ============ */
+function optList(arr,sel){return arr.map(v=>`<option ${v===sel?'selected':''}>${esc(v)}</option>`).join('')}
+function renderSetup(){
+  const s=S(),I=s.info;
+  const loaderUnits=UNITS().filter(u=>isLoaderEgi(u[1])).map(u=>`<option value="${esc(u[0])}">${esc(u[1])}</option>`).join('');
+  const hUnits=UNITS().filter(u=>!isLoaderEgi(u[1])).map(u=>`<option value="${esc(u[0])}">${esc(u[1])}</option>`).join('');
+  $('#v-setup').innerHTML=`
+  <datalist id="dlL">${loaderUnits}</datalist><datalist id="dlH">${hUnits}</datalist>
+  <div class="card"><h3>Lokasi &amp; Kondisi</h3>
+   <div class="row"><div><label>Tanggal</label><input type="date" data-k="date" value="${esc(I.date)}"></div>
+   <div><label>Pit / Lokasi</label><select data-k="pit">${optList(DB.pit,I.pit)}</select></div></div>
+   <label>Kondisi Cuaca</label><select data-k="weather">${optList(DB.weather,I.weather)}</select>
+   <div class="row"><div><label>Material</label><select data-k="material">${Object.keys(DB.mat).map(m=>`<option ${m===I.material?'selected':''}>${m}</option>`).join('')}</select></div>
+   <div><label>Swell Factor</label><input type="number" step="0.01" inputmode="decimal" data-k="sf" value="${esc(I.sf)}"></div></div>
+   <div class="row"><div><label>Jarak Angkut (m)</label><input type="number" inputmode="decimal" data-k="distance" value="${esc(I.distance)}" placeholder="mis. 2500"></div>
+   <div><label>Observer</label><input data-k="observer" value="${esc(I.observer)}" placeholder="Nama"></div></div>
+  </div>
+  <div class="card"><h3>Loader (Alat Muat)</h3>
+   <div class="row"><div><label>Kode Unit (CN)</label><input list="dlL" data-k="loaderCN" value="${esc(I.loaderCN)}" placeholder="mis. HEX 1205" autocomplete="off"></div>
+   <div><label>Model (EGI)</label><input data-k="loaderEGI" value="${esc(I.loaderEGI)}" placeholder="otomatis"></div></div>
+   <div class="row"><div><label>Kapasitas Bucket (m³)</label><input type="number" step="0.1" inputmode="decimal" data-k="bucket" value="${esc(I.bucket)}"></div><div></div></div>
+   <div class="row"><div><label>Swing Loaded Plan (°)</label><input type="number" data-k="angSLplan" value="${esc(I.angSLplan)}"></div><div><label>Swing Loaded Aktual (°)</label><input type="number" data-k="angSL" value="${esc(I.angSL)}"></div></div>
+   <div class="row"><div><label>Swing Empty Plan (°)</label><input type="number" data-k="angSEplan" value="${esc(I.angSEplan)}"></div><div><label>Swing Empty Aktual (°)</label><input type="number" data-k="angSE" value="${esc(I.angSE)}"></div></div>
+   ${I.loaderEGI&&!isLoaderEgi(I.loaderEGI)?'<div class="warn" style="margin-top:8px">EGI loader tidak ada di database FLAZ — plan &amp; estimasi BBM tidak tersedia.</div>':''}
+  </div>
+  <div class="card"><h3>Target Produktivitas Loader</h3>
+   <div class="row"><div><label>Target (BCM/jam)</label><input type="number" step="0.1" inputmode="decimal" data-k="target" value="${esc(I.target)}" placeholder="mis. 600"></div>
+   <div><label>Toleransi "pas" (± %)</label><input type="number" step="0.5" inputmode="decimal" data-k="tol" value="${esc(I.tol??5)}"></div></div>
+   <p class="mut">${STD(I.loaderEGI,I.material)?'Standar '+esc(I.loaderEGI)+' / '+esc(I.material)+': '+STD(I.loaderEGI,I.material).pdty+' BCM/jam (terisi otomatis, boleh diubah; kosongkan untuk kembali ke standar). ':''}Laporan: di bawah target = <b>UNDER HAULER</b>, dalam toleransi = <b>HAULER SUDAH PAS</b>, di atas target = <b>OVER – GOOD JOB</b>.</p></div>
+  <div class="card"><h3>Hauler (maks. 10)</h3>
+   <div class="hrow mut"><span>Kode Unit (CN)</span><span>Model</span><span>Kap. BCM</span><span></span></div>
+   ${s.haulers.map((h,i)=>`<div class="hrow"><input list="dlH" data-h="${i}" data-f="cn" value="${esc(h.cn)}" placeholder="H${i+1}" autocomplete="off"><input data-h="${i}" data-f="egi" value="${esc(h.egi)}"><input type="number" step="0.1" inputmode="decimal" data-h="${i}" data-f="cap" value="${esc(h.cap)}"><button class="btn red sm" data-del="${i}">✕</button></div>`).join('')}
+   <button class="btn ghost" id="addH" ${s.haulers.length>=10?'disabled':''}>＋ Tambah Hauler</button>
+   <p class="mut">Kapasitas (BCM) terisi otomatis dari tabel FLAZ berdasar model hauler &amp; material; bisa diubah manual.</p>
+  </div>
+  <div class="card"><h3>Catatan</h3><textarea rows="2" data-k="note" placeholder="Catatan lapangan (opsional)">${esc(I.note)}</textarea></div>
+  <button class="btn acc" style="width:100%" id="goObs">Mulai Observasi →</button>`;
+}
+function onSetupChange(e){
+  const t=e.target,s=S(),I=s.info;
+  if(t.dataset.k){const k=t.dataset.k;let v=t.value;
+    if(k==='material'){I.material=v;I.sf=DB.mat[v].sf;s.ff=DB.mat[v].ff;s.haulers.forEach(h=>{if(h.egi){const c=capOf(h.egi,v);h.cap=c}});autoBucket();autoTarget()}
+    else if(k==='loaderCN'){I.loaderCN=v;const g=egiOf(v);if(g){I.loaderEGI=g;autoBucket(true)}autoTarget()}
+    else if(k==='loaderEGI'){I.loaderEGI=v.trim();autoBucket(true);autoTarget()}
+    else if(k==='target'){I.target=v;I.targetManual=v!=='';if(v==='')autoTarget()}
+    else I[k]=v;
+    save();renderSetup();renderHead();return}
+  if(t.dataset.h!==undefined){const h=s.haulers[+t.dataset.h],f=t.dataset.f;h[f]=t.value;
+    if(f==='cn'){const g=egiOf(t.value);if(g){h.egi=g;h.cap=capOf(g,I.material)}}
+    if(f==='egi'){h.cap=capOf(t.value.trim(),I.material)||h.cap}
+    save();renderSetup()}
+}
+function autoBucket(force){const I=S().info;const l=LD(I.loaderEGI);if(l&&(force||!I.bucket))I.bucket=l.bucket}
+function autoTarget(){const I=S().info;if(I.targetManual)return;const st=STD(I.loaderEGI,I.material);I.target=st&&st.pdty?st.pdty:''}
+
+/* ============ VIEW: OBSERVASI ============ */
+function renderObs(){
+  const s=S();
+  const chips=s.haulers.map((h,i)=>`<button class="chip ${i===s.curH?'on':''}" data-hc="${i}">${esc(h.cn||'H'+(i+1))}${(s.ritNo[i]||1)>1?`<b class="bd">${(s.ritNo[i]||1)-1}</b>`:''}</button>`).join('');
+  const ab=(c,cls)=>`<button class="ab ${cls} ${s.open&&s.open.act===c?'run':''}" data-a="${c}"><b>${c}</b><small>${ACTS[c].s}</small></button>`;
+  $('#v-obs').innerHTML=`
+  <div class="card"><h3>Hauler yang sedang dimuat</h3><div class="chips" id="hch">${chips}</div></div>
+  <div class="card timer" id="tcard"></div>
+  <div class="card"><h3>Fill Factor (kondisi muat)</h3><div class="chips" id="ffc">${FFG.map(g=>`<button class="chip ${Math.abs(g.v-s.ff)<1e-6?'on':''}" data-ff="${g.v}" title="${esc(g.n)}">${g.k} <small>${g.v}</small></button>`).join('')}</div>
+   <div class="mut" style="margin-top:6px">FF tercatat pada setiap DUMP (pass). Material ${esc(s.info.material)}: standar ${DB.mat[s.info.material].ff}</div></div>
+  <div class="card"><h3>Aktivitas Utama (Primary)</h3><div class="grid g2">${PRIM.map(c=>ab(c,'P')).join('')}</div>
+   <h3 style="margin-top:12px">Sekunder</h3><div class="grid g4">${SEC.map(c=>ab(c,'S')).join('')}</div>
+   <h3 style="margin-top:12px">No Activity / Delay</h3><div class="grid g3">${IDLE.map(c=>ab(c,'I')).join('')}</div></div>
+  <div class="grid g3"><button class="btn red" id="bStop">⏹ Stop</button><button class="btn acc" id="bEnd" style="grid-column:span 1">✔ Hauler Selesai</button><button class="btn ghost" id="bUndo">↶ Undo</button></div>
+  <p class="mut" style="margin:8px 4px">Ketuk aktivitas → aktivitas sebelumnya otomatis berhenti &amp; tercatat. <b>Hauler Selesai</b> = hauler berangkat (ritase +1).</p>`;
+  tick();
+}
+function refreshObs(){renderObs();renderHead()}
+function tick(){
+  const el=$('#tcard');if(!el)return;
+  const s=S(),h=s.haulers[s.curH]||{};const now=Date.now();
+  const rit=s.ritNo[s.curH]||1;
+  const duN=s.segs.filter(g=>g.h===s.curH&&g.rit===rit&&g.act==='DU').length;
+  const tp=s.segs.filter(g=>g.act==='DU').length+(s.open&&s.open.act==='DU'?1:0);
+  const rt=Object.values(s.ritNo).reduce((a,b)=>a+(b-1),0);
+  const first=s.segs.length?Math.min(...s.segs.map(g=>g.start)):(s.open?s.open.start:null);
+  const o=s.open;
+  el.innerHTML=`<div class="meta">${esc(h.cn||'H'+(s.curH+1))} · Rit ke-${rit} · Pass ${duN+(o&&o.act==='DU'&&o.h===s.curH&&o.rit===rit?1:0)}</div>
+  <div class="big">${o?fDur((now-o.start)/1000):'00:00.0'}</div>
+  <div class="act" style="color:${o?'var(--acc2)':'var(--mut)'}">${o?o.act+' — '+ACTS[o.act].n+(o.h!==s.curH?' ('+esc((s.haulers[o.h]||{}).cn||'')+')':''):'Pilih aktivitas untuk mulai'}</div>
+  <div class="cnt" style="margin-top:10px"><div><b>${tp}</b><span>Total pass</span></div><div><b>${rt}</b><span>Rit selesai</span></div><div><b>${first?fDur((now-first)/1000).slice(0,-2):'00:00'}</b><span>Lama observasi</span></div></div>`;
+}
+setInterval(()=>{if($('#v-obs').classList.contains('on'))tick()},200);
+
+/* ============ VIEW: LOG ============ */
+function renderLog(){
+  const s=S();const segs=[...s.segs].sort((a,b)=>b.start-a.start);
+  const op=s.open;
+  $('#v-log').innerHTML=`<div class="card"><h3>Log Aktivitas (${s.segs.length} data)</h3>
+   ${op?`<div class="logrow" style="background:var(--okbg)"><span class="c ${ACTS[op.act].g}">${op.act}</span><div class="m"><b>${esc((s.haulers[op.h]||{}).cn||'')}</b> · rit ${op.rit} · berjalan…<small>${fT(op.start)}</small></div></div>`:''}
+   ${segs.length?segs.map(g=>`<div class="logrow" data-e="${g.id}"><span class="c ${ACTS[g.act].g}">${g.act}</span><div class="m"><b>${esc((s.haulers[g.h]||{}).cn||'H'+(g.h+1))}</b> · rit ${g.rit} · pass ${g.pass}${g.ff?' · FF '+g.ff:''}<small>${fT(g.start)} — ${ACTS[g.act].n}</small></div><b>${fN(g.dur,1)} s</b></div>`).join(''):'<p class="mut">Belum ada data. Mulai di tab Observasi.</p>'}
+   <p class="mut">Ketuk baris untuk mengubah / menghapus.</p></div>
+   <button class="btn ghost" style="width:100%" id="addManual">＋ Tambah data manual</button>`;
+}
+function segDialog(id){
+  const s=S();const g=id?s.segs.find(x=>x.id===id):{id:null,h:s.curH,act:'DL',start:Date.now(),dur:5,ff:null,rit:s.ritNo[s.curH]||1,pass:1};
+  const d=$('#dlg');
+  d.innerHTML=`<h3 style="margin:0 0 4px">${id?'Ubah data':'Data manual'}</h3>
+  <label>Aktivitas</label><select id="eA">${Object.keys(ACTS).map(c=>`<option value="${c}" ${c===g.act?'selected':''}>${c} — ${ACTS[c].n}</option>`).join('')}</select>
+  <label>Hauler</label><select id="eH">${s.haulers.map((h,i)=>`<option value="${i}" ${i===g.h?'selected':''}>${esc(h.cn||'H'+(i+1))}</option>`).join('')}</select>
+  <div class="row"><div><label>Mulai (jam)</label><input type="time" step="1" id="eS" value="${fT(g.start)}"></div><div><label>Durasi (detik)</label><input type="number" step="0.1" id="eD" value="${g.dur}"></div></div>
+  <div class="row"><div><label>Rit ke-</label><input type="number" id="eR" value="${g.rit}"></div><div><label>Pass ke-</label><input type="number" id="eP" value="${g.pass}"></div><div><label>FF (DU)</label><input type="number" step="0.001" id="eF" value="${g.ff??''}"></div></div>
+  <div class="row" style="margin-top:14px">${id?'<button class="btn red" id="eDel">Hapus</button>':''}<button class="btn ghost" id="eX">Batal</button><button class="btn acc" id="eOK">Simpan</button></div>`;
+  d.showModal();
+  $('#eX').onclick=()=>d.close();
+  if(id)$('#eDel').onclick=()=>{s.segs=s.segs.filter(x=>x.id!==id);s.hist=[];save();d.close();renderAll()};
+  $('#eOK').onclick=()=>{
+    const t=($('#eS').value||'00:00:00').split(':').map(Number);const base=new Date(g.start);base.setHours(t[0]||0,t[1]||0,t[2]||0,0);
+    const n={id:g.id||uid(),h:+$('#eH').value,act:$('#eA').value,start:base.getTime(),dur:Math.max(0,+$('#eD').value||0),rit:Math.max(1,+$('#eR').value||1),pass:+$('#eP').value||1,ff:+$('#eF').value||null};
+    if(n.act!=='DU')n.ff=n.ff;
+    if(id){const i=s.segs.findIndex(x=>x.id===id);s.segs[i]=n}else{s.segs.push(n);if((s.ritNo[n.h]||1)<n.rit)s.ritNo[n.h]=n.rit}
+    s.hist=[];save();d.close();renderAll()};
+}
+
+/* ============ VIEW: HASIL ============ */
+function vdHtml(v,c){return `<div class="vd ${v.k}"><div class="vt">${v.text}</div><div>Aktual <b>${fN(c.pdty,1)}</b> vs Target <b>${fN(v.target,1)}</b> BCM/jam (${v.gap>=0?'+':''}${fN(v.gap,1)} · ${v.pct>=0?'+':''}${fN(v.pct*100,1)}%)</div><div class="mut">${v.note}${v.need?' Estimasi kebutuhan hauler ≈ '+v.need+' unit (teramati '+v.have+').':''} Toleransi pas ±${fN(v.tol,1)}%.</div></div>`}
+function renderRes(){
+  const s=S(),c=calc(s),I=c.I;
+  const kpi=(v,l)=>`<div><b>${v}</b><span>${l}</span></div>`;
+  const plan=c.plan;
+  const cmp=(label,unit,p,a,d=2)=>`<tr><td>${label}</td><td>${unit}</td><td>${fN(p,d)}</td><td><b>${fN(a,d)}</b></td></tr>`;
+  $('#v-res').innerHTML=`
+  ${c.openRits||s.open?`<div class="warn">Ada ${s.open?'aktivitas berjalan dan ':''}${c.openRits} rit belum ditutup — tidak dihitung pada rata-rata hauler. <button class="btn sm acc" id="closeAll" style="margin-left:6px">Tutup semua</button></div>`:''}
+  ${!c.hasStd&&I.loaderEGI?`<div class="warn">Standar plan untuk ${esc(I.loaderEGI)} / ${esc(I.material)} tidak ada di database — kolom PLAN kosong.</div>`:''}
+  ${c.verdict?vdHtml(c.verdict,c):'<div class="warn">Target produktivitas belum diisi (tab Setup) — keterangan Under/Pas/Over belum tersedia.</div>'}
+  <div class="card"><h3>Ringkasan Loader — ${esc(I.loaderCN||'-')} <span style="text-transform:none">(${esc(I.loaderEGI||'-')})</span></h3>
+   <div class="kpi">${kpi(fN(c.pdty,1),'BCM/jam (aktual)')}${kpi(fN(c.prod,1),'Produksi BCM')}${kpi(c.passes,'Total pass')}${kpi(fN(c.hT.n,0),'Total ritase')}</div>
+   <div class="sc" style="margin-top:10px"><table><tr><th>Parameter</th><th>Unit</th><th>Plan</th><th>Aktual</th></tr>
+   ${cmp('Swing Loaded','°',+I.angSLplan||null,+I.angSL||null,0)}${cmp('Swing Empty','°',+I.angSEplan||null,+I.angSE||null,0)}
+   ${cmp('Avg Pass / Hauler','pass',plan.pass,c.avgPassHauler)}${cmp('Avg Fill Factor','',plan.ff,c.avgFF,3)}
+   ${cmp('Avg Loading Time','menit',plan.load,c.avgLoad)}${cmp('Produksi','BCM',plan.prod,c.prod,1)}${cmp('Produktivitas','BCM/jam',plan.pdty,c.pdty,1)}${cmp('Target Produktivitas','BCM/jam',c.target,c.pdty,1)}
+   ${cmp('Est. BBM','liter',plan.fuel,c.fuel,1)}${cmp('Est. Konsumsi BBM','L/jam',plan.fuelH,c.fuelH,1)}${cmp('Est. Rasio BBM','L/BCM',plan.ratio,c.ratio,3)}</table></div>
+   <p class="mut">Waktu: ${c.startMs?fT(c.startMs)+' – '+fT(c.stopMs):'-'} · Total ${fN(c.totMin,1)} menit</p></div>
+  <div class="card"><h3>Aktivitas Loader</h3><div class="sc"><table><tr><th>Aktivitas</th><th>Plan s</th><th>Akt. s</th><th>Plan mnt</th><th>Akt. mnt</th><th>%</th><th></th></tr>
+   ${grp('PRIMARY',PRIM)}${grp('SECONDARY',SEC)}${grp('NO ACTIVITY',IDLE)}</table></div></div>
+  <div class="card"><h3>Ringkasan Hauler ${I.distance?`· jarak ${fN(+I.distance,0)} m`:''}</h3><div class="sc"><table>
+   <tr><th>Unit</th><th>Rit</th><th>Pass</th><th>Load</th><th>Travel</th><th>Wait</th><th>CT</th><th>km/j</th><th>BCM</th></tr>
+   ${c.hs.map(h=>`<tr><td>${esc(h.cn)}${h.open?' <span class="mut">(+'+h.open+')</span>':''}</td><td>${h.n}</td><td>${fN(h.avgPass,1)}</td><td>${fN(h.load)}</td><td>${fN(h.travel)}</td><td>${fN(h.wait)}</td><td>${fN(h.ct)}</td><td>${fN(h.speed,1)}</td><td>${fN(h.prod,1)}</td></tr>`).join('')}
+   <tr class="grp"><td>TOTAL/AVG</td><td>${c.hT.n}</td><td>${fN(c.hT.avgPass,1)}</td><td>${fN(c.hT.load)}</td><td>${fN(c.hT.travel)}</td><td>${fN(c.hT.wait)}</td><td>${fN(c.hT.ct)}</td><td>${fN(c.hT.speed,1)}</td><td>${fN(c.hT.prod,1)}</td></tr></table></div>
+   <p class="mut">Load/Travel/Wait/CT dalam menit. CT = selisih awal pemuatan rit berurutan (butuh ≥2 rit per hauler). Travel = CT − Load.</p></div>
+  <div class="card"><h3>Ekspor</h3><div class="grid g2"><button class="btn acc" id="xXls">📗 Excel (.xlsx)</button><button class="btn acc" id="xPdf">📕 PDF</button></div>
+   <button class="btn ghost" style="width:100%;margin-top:8px" id="xShare">📤 Bagikan (WhatsApp dll)</button></div>`;
+  function grp(t,l){const rs=l.map(k=>c.rows.find(r=>r.c===k));
+    return `<tr class="grp"><td colspan="7">${t}</td></tr>`+rs.map(r=>`<tr><td>${r.c} <span class="mut">${ACTS[r.c].s}</span></td><td>${fN(r.plan,1)}</td><td>${fN(r.avg,1)}</td><td>${fN(r.planMin)}</td><td>${fN(r.min)}</td><td>${fP(r.pctA)}</td><td style="width:50px"><div class="bar"><i style="width:${Math.min(100,r.pctA*100)}%"></i></div></td></tr>`).join('')}
+}
+
+/* ============ MASTER DATA ============ */
+const MATS=Object.keys(DB.mat), STDK=['DL','SL','DU','SE','PO','DP','CO','WD','TV'];
+function renderMaster(){
+  const L=LOADERS(),egis=Object.keys(L).sort(),U=UNITS();
+  $('#v-master').innerHTML=`
+  <div class="card"><h3>Unit Exca (Loader)</h3>
+   <button class="btn acc" style="width:100%" id="mAddL">＋ Tambah Exca / Unit Baru</button>
+   <div style="margin-top:8px">${egis.map(e=>{const l=L[e],n=U.filter(u=>u[1]===e).length,tag=MD.loaders[e]?(DB.loaders[e]?'diubah':'baru'):'';
+     return `<div class="logrow" data-ml="${esc(e)}"><div class="m"><b>${esc(e)}</b> ${tag?'<span class="mut">('+tag+')</span>':''}<small>Bucket ${l.bucket} m³ · FC ${l.fc} L/jam · ${n} unit · standar: ${MATS.filter(m=>STD(e,m)).join(', ')||'-'}</small></div><span class="mut">›</span></div>`}).join('')}</div></div>
+  <div class="card"><h3>Unit (CN) tambahan</h3>${MD.units.length?MD.units.map((u,i)=>`<div class="logrow"><div class="m"><b>${esc(u[0])}</b><small>${esc(u[1])}</small></div><button class="btn red sm" data-delu="${i}">Hapus</button></div>`).join(''):'<p class="mut">Belum ada unit tambahan.</p>'}</div>
+  <div class="card"><h3>Cadangan Master Data</h3><div class="grid g2"><button class="btn ghost" id="mExp">⬇ Ekspor (.json)</button><button class="btn ghost" id="mImp">⬆ Impor (.json)</button></div><input type="file" id="mFile" accept=".json,application/json" hidden><p class="mut">Pindahkan master data ke HP lain, atau simpan sebagai cadangan.</p></div>`;
+}
+document.addEventListener('change',e=>{if(e.target.id!=='mFile'||!e.target.files[0])return;
+  const fr=new FileReader();fr.onload=()=>{try{const j=JSON.parse(fr.result);if(!j.flaz_master)throw 0;
+    (j.units||[]).forEach(u=>{MD.units=MD.units.filter(x=>x[0].toLowerCase()!==u[0].toLowerCase());MD.units.push(u)});
+    Object.assign(MD.loaders,j.loaders||{});Object.assign(MD.std,j.std||{});saveMD();renderMaster();toast('Master data diimpor')}catch(x){toast('File master tidak valid')}};
+  fr.readAsText(e.target.files[0]);e.target.value=''});
+let DR=null;
+function openLoader(egi){
+  const ex=egi?LD(egi):null;
+  DR={isNew:!egi,egi:egi||'',bucket:ex?ex.bucket:'',fc:ex?ex.fc:'',maxfc:ex?ex.maxfc:'',units:egi?UNITS().filter(u=>u[1]===egi).map(u=>u[0]):[],std:{},mat:MATS[0]};
+  MATS.forEach(m=>{const s=egi&&STD(egi,m);DR.std[m]=s?{...s}:{}});
+  const d=$('#dlg');drawLoader();d.showModal();
+  d.onclose=()=>{DR=null};
+  d.oninput=e=>{if(!DR)return;const t=e.target;
+    if(t.id==='lB')DR.bucket=t.value;else if(t.id==='lFc')DR.fc=t.value;else if(t.id==='lMx')DR.maxfc=t.value;else if(t.id==='lEgi')DR.egi=t.value;else if(t.id==='lUnits')DR.unitsTxt=t.value;
+    else if(t.dataset.sk){if(t.value==='')delete DR.std[DR.mat][t.dataset.sk];else DR.std[DR.mat][t.dataset.sk]=+t.value}};
+  d.onchange=e=>{if(!DR)return;if(e.target.id==='lCopy'&&e.target.value){const src=e.target.value,l=LD(src);
+      DR.bucket=l.bucket;DR.fc=l.fc;DR.maxfc=l.maxfc;MATS.forEach(m=>{const s=STD(src,m);DR.std[m]=s?{...s}:{}});
+      DR.egi=$('#lEgi').value;DR.unitsTxt=$('#lUnits').value;drawLoader()}};
+  d.onclick=e=>{if(!DR)return;const t=e.target.closest('button');if(!t)return;
+    if(t.dataset.lm){DR.mat=t.dataset.lm;drawLoader(true);return}
+    if(t.id==='lX'){d.close();return}
+    if(t.id==='lOK'){saveLoader();return}
+    if(t.id==='lDel'){if(confirm(DB.loaders[DR.egi]?'Kembalikan '+DR.egi+' ke data bawaan?':'Hapus Exca '+DR.egi+'?')){
+      const g=DR.egi;delete MD.loaders[g];MATS.forEach(m=>delete MD.std[g+'|'+m]);MD.units=MD.units.filter(u=>u[1]!==g);saveMD();d.close();renderAll();toast('Selesai')}}};
+}
+function drawLoader(keepScroll){
+  const d=$('#dlg'),D=DR,st=D.std[D.mat],sc=d.scrollTop;
+  const lbl={DL:'DL gali',SL:'SL swing isi',DU:'DU dump',SE:'SE swing kosong',PO:'PO posisi',DP:'DP gali siap',CO:'CO ganti opr',WD:'WD tunggu',TV:'TV travel'};
+  d.innerHTML=`<h3 style="margin:0 0 4px">${D.isNew?'Tambah Exca':'Ubah Exca '+esc(D.egi)}</h3>
+  ${D.isNew?`<label>Salin parameter dari (opsional)</label><select id="lCopy"><option value="">— tidak —</option>${Object.keys(LOADERS()).sort().map(e=>'<option>'+esc(e)+'</option>').join('')}</select>
+  <label>Model (EGI)</label><input id="lEgi" value="${esc(D.egi)}" placeholder="mis. PC300" autocapitalize="characters">`:''}
+  <label>Kode unit (CN) — pisahkan dengan koma</label><textarea id="lUnits" rows="2" placeholder="HEX 218, HEX 219">${esc(D.unitsTxt??D.units.join(', '))}</textarea>
+  <div class="row"><div><label>Bucket (m³)</label><input type="number" step="0.1" inputmode="decimal" id="lB" value="${esc(D.bucket)}"></div>
+  <div><label>FC plan (L/jam)</label><input type="number" step="0.1" inputmode="decimal" id="lFc" value="${esc(D.fc)}"></div>
+  <div><label>Max FC (L/jam)</label><input type="number" step="0.1" inputmode="decimal" id="lMx" value="${esc(D.maxfc)}" placeholder="auto"></div></div>
+  <p class="mut" style="margin:4px 0">Max FC kosong = otomatis 1,9 × FC plan (rasio umum di tabel FLAZ).</p>
+  <h3 style="margin:12px 0 6px">Standar plan per material</h3>
+  <div class="chips">${MATS.map(m=>`<button class="chip ${m===D.mat?'on':''}" data-lm="${m}">${m}${Object.keys(D.std[m]).length?' ●':''}</button>`).join('')}</div>
+  <p class="mut" style="margin:6px 0 2px">Standar durasi (detik per cycle) untuk material <b>${D.mat}</b>. Kosongkan semua bila material ini tidak dipakai.</p>
+  <div class="grid g3">${STDK.map(k=>`<div><label style="margin-top:4px">${lbl[k]}</label><input type="number" step="0.1" inputmode="decimal" data-sk="${k}" value="${st[k]??''}"></div>`).join('')}
+   <div><label style="margin-top:4px">Fill factor</label><input type="number" step="0.001" inputmode="decimal" data-sk="ff" value="${st.ff??''}" placeholder="${DB.mat[D.mat].ff}"></div>
+   <div style="grid-column:span 2"><label style="margin-top:4px">Target std (BCM/jam)</label><input type="number" step="0.1" inputmode="decimal" data-sk="pdty" value="${st.pdty??''}"></div></div>
+  <div class="row" style="margin-top:14px">${!D.isNew&&MD.loaders[D.egi]?`<button class="btn red" id="lDel">${DB.loaders[D.egi]?'Reset':'Hapus'}</button>`:''}<button class="btn ghost" id="lX">Batal</button><button class="btn acc" id="lOK">Simpan</button></div>`;
+  if(keepScroll)d.scrollTop=sc;
+}
+function saveLoader(){
+  const D=DR,d=$('#dlg');
+  const egi=D.isNew?String(D.egi).trim():D.egi;
+  if(!egi){toast('Isi model (EGI)');return}
+  if(D.isNew&&LD(egi)){toast('EGI sudah ada — ubah dari daftar');return}
+  const bucket=+D.bucket,fc=+D.fc||0;if(!(bucket>0)){toast('Isi kapasitas bucket');return}
+  MD.loaders[egi]={bucket,fc,maxfc:+D.maxfc>0?+D.maxfc:r2(fc*1.9,1)};
+  MATS.forEach(m=>{const s=D.std[m],k=egi+'|'+m;
+    if(Object.keys(s).length){const o={};[...STDK,'ff','pdty'].forEach(x=>o[x]=+s[x]||0);if(!o.ff)o.ff=DB.mat[m].ff;MD.std[k]=o}else delete MD.std[k]});
+  const list=(D.unitsTxt??D.units.join(', ')).split(/[,\n;]+/).map(x=>x.trim()).filter(Boolean);
+  MD.units=MD.units.filter(u=>u[1]!==egi);
+  list.forEach(cn=>{if(!DB.units.some(u=>u[0].toLowerCase()===cn.toLowerCase()&&u[1]===egi)){MD.units=MD.units.filter(u=>u[0].toLowerCase()!==cn.toLowerCase());MD.units.push([cn,egi])}});
+  saveMD();d.close();renderAll();toast('Master Exca tersimpan');
+}
+
+/* ============ SESI / MENU ============ */
+function openMenu(){
+  const d=$('#dlg');const list=Object.values(ST.sessions).sort((a,b)=>b.created-a.created);
+  d.innerHTML=`<h3 style="margin:0 0 8px">Sesi Observasi</h3>
+  <div style="max-height:50vh;overflow:auto">${list.map(x=>`<div class="logrow" data-sw="${x.id}" style="${x.id===ST.cur?'background:var(--okbg)':''}"><div class="m"><b>${esc(x.info.loaderCN||'(loader?)')}</b> · ${esc(x.info.date)}<small>${esc(x.info.pit)} · ${x.segs.length} data · ${esc(x.info.material)}</small></div><button class="btn red sm" data-rm="${x.id}">Hapus</button></div>`).join('')}</div>
+  <div class="grid g2" style="margin-top:12px"><button class="btn acc" id="mNew">＋ Sesi baru (kosong)</button><button class="btn ghost" id="mDup">⧉ Sesi baru, setup sama</button></div>
+  <button class="btn ghost" style="width:100%;margin-top:8px" id="mClose">Tutup</button>`;
+  d.showModal();
+  d.onclick=e=>{
+    const sw=e.target.closest('[data-sw]'),rm=e.target.closest('[data-rm]');
+    if(rm){e.stopPropagation();if(confirm('Hapus sesi ini beserta datanya?')){delete ST.sessions[rm.dataset.rm];if(ST.cur===rm.dataset.rm){ST.cur=null;const k=Object.keys(ST.sessions);if(k.length)ST.cur=k[k.length-1];else newSession()}save();d.close();renderAll()}return}
+    if(sw){ST.cur=sw.dataset.sw;save();d.close();renderAll()}};
+  $('#mNew').onclick=()=>{newSession();d.close();renderAll();show('setup')};
+  $('#mDup').onclick=()=>{newSession(S());d.close();renderAll();show('setup')};
+  $('#mClose').onclick=()=>d.close();
+}
+
+/* ============ NAVIGASI & EVENT ============ */
+let VIEW='obs';
+function show(v){VIEW=v;document.querySelectorAll('main section').forEach(e=>e.classList.toggle('on',e.id==='v-'+v));
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
+  if(v==='log')renderLog();if(v==='res')renderRes();if(v==='obs')renderObs();if(v==='setup')renderSetup();if(v==='master')renderMaster();window.scrollTo(0,0)}
+function renderHead(){const s=S(),I=s.info;$('#hsub').textContent=`${I.loaderCN||'Loader ?'} · ${I.pit} · ${I.date}`}
+function renderAll(){renderHead();show(VIEW)}
+document.addEventListener('click',e=>{
+  const t=e.target.closest('button,[data-e],[data-ml]');if(!t)return;const s=S();
+  if(t.dataset.v){show(t.dataset.v);return}
+  if(t.id==='menuBtn'){openMenu();return}
+  if(t.dataset.a){tapAct(t.dataset.a);return}
+  if(t.dataset.hc!==undefined){s.curH=+t.dataset.hc;save();renderObs();return}
+  if(t.dataset.ff){s.ff=+t.dataset.ff;if(s.open&&s.open.act==='DU')s.open.ff=s.ff;save();renderObs();return}
+  if(t.id==='bStop'){stopAct(false);return}
+  if(t.id==='bEnd'){stopAct(true);return}
+  if(t.id==='bUndo'){undo();return}
+  if(t.id==='addH'){s.haulers.push({cn:'',egi:'',cap:''});save();renderSetup();return}
+  if(t.dataset.del!==undefined){const i=+t.dataset.del;if(s.segs.some(g=>g.h===i)){toast('Hauler ini sudah punya data');return}
+    s.haulers.splice(i,1);s.segs.forEach(g=>{if(g.h>i)g.h--});if(s.curH>=s.haulers.length)s.curH=Math.max(0,s.haulers.length-1);save();renderSetup();return}
+  if(t.id==='goObs'){show('obs');return}
+  if(t.dataset.e){segDialog(t.dataset.e);return}
+  if(t.id==='addManual'){segDialog(null);return}
+  if(t.id==='closeAll'){closeAllRits();return}
+  if(t.id==='xXls'){exportXlsx(false);return}
+  if(t.id==='xPdf'){exportPdf(false);return}
+  if(t.id==='xShare'){shareBoth();return}
+  if(t.dataset.ml!==undefined){openLoader(t.dataset.ml);return}
+  if(t.id==='mAddL'){openLoader(null);return}
+  if(t.dataset.delu!==undefined){if(confirm('Hapus unit tambahan ini?')){MD.units.splice(+t.dataset.delu,1);saveMD();renderMaster()}return}
+  if(t.id==='mExp'){download(new Blob([JSON.stringify({flaz_master:1,...MD},null,1)],{type:'application/json'}),'FLAZ_master_data.json');toast('Master data diunduh');return}
+  if(t.id==='mImp'){$('#mFile').click();return}
+});
+$('#v-setup').addEventListener('change',onSetupChange);
+
+/* ============ FILE HELPERS ============ */
+function fname(ext){const I=S().info;return ('FLAZ_'+(I.loaderCN||'loader')+'_'+I.date+'_'+I.pit).replace(/[^A-Za-z0-9_.-]+/g,'_')+'.'+ext}
+function download(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000)}
+async function shareBoth(){
+  const x=exportXlsx(true),p=exportPdf(true);
+  const files=[new File([x],fname('xlsx'),{type:x.type}),new File([p],fname('pdf'),{type:'application/pdf'})];
+  try{if(navigator.canShare&&navigator.canShare({files})){await navigator.share({files,title:'Laporan FLAZ'});return}}catch(e){if(e.name==='AbortError')return}
+  download(x,fname('xlsx'));download(p,fname('pdf'));toast('Berbagi tidak didukung — file diunduh')}
+
+/* ============ EXPORT EXCEL (penulis XLSX mandiri, tanpa library) ============ */
+const CRCT=(()=>{const t=[];for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+const crc32=u=>{let c=~0;for(let i=0;i<u.length;i++)c=CRCT[(c^u[i])&255]^(c>>>8);return ~c>>>0};
+function zip(files){
+  const enc=new TextEncoder(),parts=[],cen=[];let off=0;
+  const u16=n=>[n&255,n>>8&255],u32=n=>[n&255,n>>8&255,n>>16&255,n>>>24&255];
+  files.forEach(f=>{const nm=enc.encode(f.name),d=typeof f.data==='string'?enc.encode(f.data):f.data,c=crc32(d);
+    const lh=new Uint8Array([0x50,0x4b,3,4,20,0,0,8,0,0,0,0,0x21,0,...u32(c),...u32(d.length),...u32(d.length),...u16(nm.length),0,0]);
+    parts.push(lh,nm,d);
+    cen.push(new Uint8Array([0x50,0x4b,1,2,20,0,20,0,0,8,0,0,0,0,0x21,0,...u32(c),...u32(d.length),...u32(d.length),...u16(nm.length),0,0,0,0,0,0,0,0,0,0,0,0,...u32(off)]),nm);
+    off+=lh.length+nm.length+d.length});
+  const cs=cen.reduce((t,a)=>t+a.length,0);
+  const end=new Uint8Array([0x50,0x4b,5,6,0,0,0,0,...u16(files.length),...u16(files.length),...u32(cs),...u32(off),0,0]);
+  return new Blob([...parts,...cen,end],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})}
+const colL=i=>{let s='';i++;while(i>0){const m=(i-1)%26;s=String.fromCharCode(65+m)+s;i=(i-m-1)/26|0}return s};
+const xe=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])).replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g,'');
+/* style ids: 0 normal,1 title,2 header,3 bold,4 0.00,5 time,6 pct,7 date,8 int,9 text-border,10 num-border,11 group,12 note */
+function sheetXml(rows,widths,merges){
+  let x='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0" showGridLines="0"/></sheetViews><sheetFormatPr defaultRowHeight="15"/>';
+  x+='<cols>'+widths.map((w,i)=>`<col min="${i+1}" max="${i+1}" width="${w}" customWidth="1"/>`).join('')+'</cols><sheetData>';
+  rows.forEach((r,ri)=>{if(!r)return;x+=`<row r="${ri+1}">`;
+    r.forEach((c,ci)=>{if(c==null||c==='')return;let v=c,s=0;if(typeof c==='object'&&!(c instanceof Date)){v=c.v;s=c.s||0}
+      const ref=colL(ci)+(ri+1);
+      if(v==null||v===''){if(s)x+=`<c r="${ref}" s="${s}"/>`;return}
+      if(typeof v==='number'&&isFinite(v))x+=`<c r="${ref}" s="${s}"><v>${v}</v></c>`;
+      else x+=`<c r="${ref}" s="${s}" t="inlineStr"><is><t xml:space="preserve">${xe(v)}</t></is></c>`});
+    x+='</row>'});
+  x+='</sheetData>';
+  if(merges&&merges.length)x+=`<mergeCells count="${merges.length}">${merges.map(m=>`<mergeCell ref="${m}"/>`).join('')}</mergeCells>`;
+  x+='<pageMargins left="0.5" right="0.5" top="0.6" bottom="0.6" header="0.3" footer="0.3"/><pageSetup paperSize="9" orientation="portrait" fitToHeight="0"/></worksheet>';
+  return x}
+const STYLES=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+<numFmts count="4"><numFmt numFmtId="164" formatCode="hh:mm:ss"/><numFmt numFmtId="165" formatCode="0.0%"/><numFmt numFmtId="166" formatCode="dd/mm/yyyy"/><numFmt numFmtId="167" formatCode="#,##0.00"/></numFmts>
+<fonts count="5"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="15"/><color rgb="FF0F172A"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font><font><i/><sz val="10"/><color rgb="FF64748B"/><name val="Calibri"/></font></fonts>
+<fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF0F172A"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFEF3C7"/></patternFill></fill></fills>
+<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style="thin"><color rgb="FFCBD5E1"/></left><right style="thin"><color rgb="FFCBD5E1"/></right><top style="thin"><color rgb="FFCBD5E1"/></top><bottom style="thin"><color rgb="FFCBD5E1"/></bottom><diagonal/></border></borders>
+<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
+<cellXfs count="13">
+<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
+<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/>
+<xf numFmtId="0" fontId="2" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
+<xf numFmtId="0" fontId="3" fillId="0" borderId="0" xfId="0" applyFont="1"/>
+<xf numFmtId="167" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>
+<xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1" applyAlignment="1"><alignment horizontal="left"/></xf>
+<xf numFmtId="165" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1"/>
+<xf numFmtId="166" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1" applyAlignment="1"><alignment horizontal="left"/></xf>
+<xf numFmtId="1" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1"/>
+<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1"/>
+<xf numFmtId="167" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1"/>
+<xf numFmtId="0" fontId="3" fillId="3" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1"/>
+<xf numFmtId="0" fontId="4" fillId="0" borderId="0" xfId="0" applyFont="1"/>
+</cellXfs></styleSheet>`;
+const dayFrac=ms=>{const d=new Date(ms);return (d.getHours()*3600+d.getMinutes()*60+d.getSeconds()+d.getMilliseconds()/1000)/86400};
+const serialDate=str=>{const [y,m,d]=str.split('-').map(Number);return Math.round(Date.UTC(y,m-1,d)/86400000)+25569};
+function buildSheets(s){
+  const c=calc(s),I=c.I,N=(v,st=10)=>({v:v==null||!isFinite(v)?'':r2(v,4),s:st}),T=(v,st=9)=>({v:v==null?'':v,s:st});
+  const R=[];const row=(...a)=>R.push(a);
+  row({v:'FLEET ANALYZE REPORT (FLAZ) — OBSERVASI CYCLE TIME',s:1});
+  row({v:'Dibuat dengan FLAZ Observer · '+new Date().toLocaleString('id-ID'),s:12});row();
+  row({v:'LINGKUNGAN',s:11},{v:'',s:11},{v:'',s:11},{v:'',s:11},{v:'LOADER',s:11},{v:'',s:11},{v:'',s:11});
+  row(T('Tanggal'),{v:serialDate(I.date),s:7},'','',T('Kode Unit'),T(I.loaderCN));
+  row(T('Lokasi'),T(I.pit),'','',T('Model (EGI)'),T(I.loaderEGI));
+  row(T('Cuaca'),T(I.weather),'','',T('Bucket (m3)'),N(+I.bucket));
+  row(T('Material'),T(I.material),'','',T('Mulai'),{v:c.startMs?dayFrac(c.startMs):'',s:5});
+  row(T('Swell Factor'),N(c.sf),'','',T('Selesai'),{v:c.stopMs?dayFrac(c.stopMs):'',s:5});
+  row(T('Jarak (m)'),N(c.dist),'','',T('Jumlah PASS'),N(c.passes,8));
+  row(T('Observer'),T(I.observer),'','',T('Catatan'),T(I.note));
+  row();
+  row({v:'RINGKASAN LOADER',s:11},{v:'',s:11},{v:'',s:11},{v:'',s:11});
+  row(...['Parameter','Unit','Plan','Aktual'].map(v=>({v,s:2})));
+  const L=(a,u,p,q)=>row(T(a),T(u),N(p),N(q));
+  L('Swing (Loaded)','degree',+I.angSLplan||null,+I.angSL||null);L('Swing (Empty)','degree',+I.angSEplan||null,+I.angSE||null);
+  L('AVG Passes Per Hauler','pass',c.plan.pass,c.avgPassHauler);L('AVG Fill Factor','',c.plan.ff,c.avgFF);
+  L('AVG Loading Time','menit',c.plan.load,c.avgLoad);L('PRODUCTION','BCM',c.plan.prod,c.prod);L('EST. PRODUCTIVITY','BCM/jam',c.plan.pdty,c.pdty);
+  L('EST. Fuel Usage','liter',c.plan.fuel,c.fuel);L('EST. Fuel Consumption','liter/jam',c.plan.fuelH,c.fuelH);L('EST. Fuel Ratio','liter/BCM',c.plan.ratio,c.ratio);
+  L('TARGET PRODUKTIVITAS','BCM/jam',c.target,c.pdty);
+  if(c.verdict){const v=c.verdict;row({v:'KETERANGAN',s:11},{v:v.text,s:11},T('Selisih BCM/jam'),N(v.gap));row(T('Selisih %'),{v:v.pct,s:6},T('Toleransi pas (%)'),N(v.tol));row(T('Catatan'),T(v.note+(v.need?' Est. kebutuhan hauler ~'+v.need+' unit (teramati '+v.have+').':'')))}
+  row();
+  row({v:'AKTIVITAS LOADER',s:11},...Array(6).fill({v:'',s:11}));
+  row(...['Aktivitas','Kode','Jumlah','Plan /cycle (s)','Aktual rata-rata (s)','Plan (menit)','Aktual (menit)','% Aktual'].map(v=>({v,s:2})));
+  c.rows.forEach(r=>row(T(ACTS[r.c].n),T(r.c),N(r.n,8),N(r.plan),N(r.avg),N(r.planMin),N(r.min),{v:r.pctA,s:6}));
+  row(T('TOTAL',11),T('',11),N(c.rows.reduce((t,r)=>t+r.n,0),8),T('',11),T('',11),T('',11),N(c.totMin),{v:c.totSec?1:'',s:6});
+  row();
+  row({v:'RINGKASAN HAULER'+(c.dist?'  (jarak '+c.dist+' m)':''),s:11},...Array(8).fill({v:'',s:11}));
+  row(...['Kode Unit','Model','Kap. (BCM)','N Ritase','Avg Passes','Avg Loading (mnt)','Avg Travel (mnt)','Total Waiting (mnt)','Avg CT (mnt)','Avg Speed (km/jam)','Produksi (BCM)'].map(v=>({v,s:2})));
+  c.hs.forEach(h=>row(T(h.cn),T(h.egi),N(h.cap),N(h.n,8),N(h.avgPass),N(h.load),N(h.travel),N(h.wait),N(h.ct),N(h.speed),N(h.prod)));
+  row(T('TOTAL / AVG',11),T('',11),T('',11),N(c.hT.n,8),N(c.hT.avgPass),N(c.hT.load),N(c.hT.travel),N(c.hT.wait),N(c.hT.ct),N(c.hT.speed),N(c.hT.prod));
+  row();row({v:'Catatan: CT = selisih awal pemuatan rit berurutan per hauler; Travel = CT - Loading; Speed = jarak/Travel x2 (pergi-pulang), sesuai rumus master.',s:12});
+  // Data
+  const D=[[...['Loader','Hauler','Activity','FillFactor','StartTime','Duration (s)','CountRit','CountPass','Nama Aktivitas','Tanggal'].map(v=>({v,s:2}))]];
+  c.segs.forEach(g=>D.push([T(I.loaderCN),T((s.haulers[g.h]||{}).cn||'H'+(g.h+1)),T(g.act),N(g.ff,10),{v:dayFrac(g.start),s:5},N(g.dur,4),N(g.rit,8),N(g.pass,8),T(ACTS[g.act].n),{v:serialDate(I.date),s:7}]));
+  // Rit
+  const Rt=[[...['Hauler','Rit ke-','Mulai Muat','Selesai Muat','Pass','Loading (s)','Positioning (s)','CT sejak rit sebelumnya (s)','Status'].map(v=>({v,s:2}))]];
+  [...c.rits].sort((a,b)=>a.h-b.h||a.rit-b.rit).forEach(r=>Rt.push([T((s.haulers[r.h]||{}).cn||'H'+(r.h+1)),N(r.rit,8),{v:dayFrac(r.start),s:5},{v:dayFrac(r.end),s:5},N(r.pass,8),N(r.load),N(r.po),N(r.ct),T(r.done?'Selesai':'Berjalan')]));
+  return [{name:'Ringkasan',rows:R,w:[30,14,14,16,22,18,16,18,14,16,16]},{name:'Data',rows:D,w:[14,14,10,11,12,13,10,10,28,12]},{name:'Rit Hauler',rows:Rt,w:[14,9,13,13,8,13,15,26,11]}];
+}
+function exportXlsx(retBlob){
+  const s=S();if(!s.segs.length&&!s.open){toast('Belum ada data');if(retBlob)return null;return}
+  const sh=buildSheets(s);
+  const files=[
+   {name:'[Content_Types].xml',data:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>'+sh.map((_,i)=>`<Override PartName="/xl/worksheets/sheet${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('')+'</Types>'},
+   {name:'_rels/.rels',data:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'},
+   {name:'xl/workbook.xml',data:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>'+sh.map((x,i)=>`<sheet name="${x.name}" sheetId="${i+1}" r:id="rId${i+1}"/>`).join('')+'</sheets></workbook>'},
+   {name:'xl/_rels/workbook.xml.rels',data:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+sh.map((_,i)=>`<Relationship Id="rId${i+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i+1}.xml"/>`).join('')+`<Relationship Id="rId${sh.length+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`},
+   {name:'xl/styles.xml',data:STYLES},
+   ...sh.map((x,i)=>({name:`xl/worksheets/sheet${i+1}.xml`,data:sheetXml(x.rows,x.w)}))];
+  const blob=zip(files);
+  if(retBlob)return blob;download(blob,fname('xlsx'));toast('Excel diunduh');
+}
+
+/* ============ EXPORT PDF (penulis PDF mandiri, font Helvetica bawaan) ============ */
+const HW=[278,278,355,556,556,889,667,191,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,278,278,584,584,584,556,1015,667,667,722,722,667,611,778,722,278,500,667,556,833,722,778,667,778,722,667,611,722,667,944,667,667,611,278,278,278,469,556,333,556,556,500,556,556,278,556,556,222,222,500,222,833,556,556,556,556,333,500,278,556,500,722,500,500,500,334,260,334,584];
+function PDF(){
+  const W=595.28,H=841.89,pages=[];let cur=null;
+  const clean=s=>String(s??'').replace(/[–—]/g,'-').replace(/[’‘]/g,"'").replace(/³/g,'3').replace(/[^\x20-\x7e\xb0\xb7]/g,'?');
+  const tw=(s,sz,b)=>{let w=0;for(const ch of clean(s)){const c=ch.charCodeAt(0);w+=c>=32&&c<=126?HW[c-32]:556}return w*sz/1000*(b?1.07:1)};
+  const col=h=>{const n=parseInt(h.slice(1),16);return [(n>>16&255)/255,(n>>8&255)/255,(n&255)/255].map(v=>v.toFixed(3)).join(' ')};
+  const f=n=>(+n).toFixed(2);
+  const o={W,H,page(){cur=[];pages.push(cur);return cur},
+    text(x,y,str,{size=9,bold=false,color='#0f172a',align='l',maxW}={}){
+      let t=clean(str);if(maxW){while(t.length>1&&tw(t,size,bold)>maxW)t=t.slice(0,-1)}
+      const w=tw(t,size,bold);if(align==='r')x-=w;else if(align==='c')x-=w/2;
+      t=t.replace(/\\/g,'\\\\').replace(/\(/g,'\\(').replace(/\)/g,'\\)');
+      cur.push(`BT ${col(color)} rg /F${bold?2:1} ${size} Tf ${f(x)} ${f(H-y)} Td (${t}) Tj ET`)},
+    rect(x,y,w,h,{fill,stroke,lw=.5}={}){cur.push(`${fill?col(fill)+' rg ':''}${stroke?col(stroke)+' RG '+lw+' w ':''}${f(x)} ${f(H-y-h)} ${f(w)} ${f(h)} re ${fill&&stroke?'B':fill?'f':'S'}`)},
+    line(x1,y1,x2,y2,{color='#cbd5e1',lw=.5}={}){cur.push(`${col(color)} RG ${lw} w ${f(x1)} ${f(H-y1)} m ${f(x2)} ${f(H-y2)} l S`)},
+    tw,
+    build(){
+      const objs=[];const add=s=>{objs.push(s);return objs.length};
+      add('<< /Type /Catalog /Pages 2 0 R >>');add('PLACEHOLDER');
+      add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>');
+      add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>');
+      const kids=[];
+      pages.forEach(p=>{const cs=p.join('\n');const ci=add(`<< /Length ${cs.length} >>\nstream\n${cs}\nendstream`);
+        kids.push(add(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents ${ci} 0 R >>`))});
+      objs[1]=`<< /Type /Pages /Kids [${kids.map(k=>k+' 0 R').join(' ')}] /Count ${kids.length} >>`;
+      let out='%PDF-1.4\n';const offs=[];
+      objs.forEach((s,i)=>{offs.push(out.length);out+=`${i+1} 0 obj\n${s}\nendobj\n`});
+      const xr=out.length;out+=`xref\n0 ${objs.length+1}\n0000000000 65535 f \n`+offs.map(x=>String(x).padStart(10,'0')+' 00000 n \n').join('');
+      out+=`trailer\n<< /Size ${objs.length+1} /Root 1 0 R >>\nstartxref\n${xr}\n%%EOF`;
+      const u=new Uint8Array(out.length);for(let i=0;i<out.length;i++)u[i]=out.charCodeAt(i)&255;
+      return new Blob([u],{type:'application/pdf'})}};
+  return o}
+function exportPdf(retBlob){
+  const s=S();if(!s.segs.length&&!s.open){toast('Belum ada data');if(retBlob)return null;return}
+  const c=calc(s),I=c.I,P=PDF(),M=36,CW=P.W-2*M;let y=0,pg=0;
+  const newPage=()=>{P.page();pg++;
+    P.rect(0,0,P.W,50,{fill:'#0f172a'});
+    P.text(M,24,'FLEET ANALYZE REPORT (FLAZ)',{size:15,bold:true,color:'#ffffff'});
+    P.text(M,40,'Observasi Cycle Time Loader & Hauler',{size:9,color:'#cbd5e1'});
+    P.text(P.W-M,24,I.loaderCN||'',{size:11,bold:true,color:'#fbbf24',align:'r'});
+    P.text(P.W-M,40,I.date.split('-').reverse().join('/')+'  |  '+I.pit,{size:9,color:'#cbd5e1',align:'r'});
+    P.text(P.W/2,P.H-18,'Halaman '+pg,{size:8,color:'#64748b',align:'c'});
+    P.text(M,P.H-18,'FLAZ Observer',{size:8,color:'#94a3b8'});
+    y=66};
+  const need=h=>{if(y+h>P.H-36)newPage()};
+  const sect=t=>{need(40);P.rect(M,y,CW,16,{fill:'#fef3c7'});P.text(M+6,y+11.5,t,{size:9.5,bold:true,color:'#78350f'});y+=22};
+  const table=(cols,rows,{rh=15,hh=16,zebra=true,bold=null}={})=>{
+    const tot=cols.reduce((t,k)=>t+k.w,0);cols=cols.map(k=>({...k,w:k.w/tot*CW}));
+    const head=()=>{let x=M;P.rect(M,y,CW,hh,{fill:'#0f172a'});cols.forEach(k=>{const tx=k.a==='r'?x+k.w-4:k.a==='c'?x+k.w/2:x+4;P.text(tx,y+hh-5,k.t,{size:7.5,bold:true,color:'#ffffff',align:k.a||'l',maxW:k.w-6});x+=k.w});y+=hh};
+    need(hh+rh*Math.min(rows.length,3));head();
+    rows.forEach((r,ri)=>{if(y+rh>P.H-36){newPage();head()}
+      const isB=bold&&bold(r,ri);
+      if(isB)P.rect(M,y,CW,rh,{fill:'#fde68a'});else if(zebra&&ri%2)P.rect(M,y,CW,rh,{fill:'#f1f5f9'});
+      let x=M;cols.forEach((k,ki)=>{const v=r[ki];
+        if(v&&typeof v==='object'&&v.bar!=null){P.rect(x+3,y+4.5,k.w-8,6,{fill:'#e2e8f0'});P.rect(x+3,y+4.5,Math.max(0,(k.w-8)*Math.min(1,v.bar)),6,{fill:'#f59e0b'})}
+        else{const tx=k.a==='r'?x+k.w-4:k.a==='c'?x+k.w/2:x+4;P.text(tx,y+rh-4.5,v,{size:8,bold:isB,align:k.a||'l',maxW:k.w-6})}
+        x+=k.w});
+      P.line(M,y+rh,M+CW,y+rh,{color:'#e2e8f0'});y+=rh});
+    y+=8};
+  const kv=(pairs,cols=2)=>{const cw=CW/cols,rows=Math.ceil(pairs.length/cols);need(rows*14+6);
+    pairs.forEach((p,i)=>{const cx=M+(i%cols)*cw,cy=y+Math.floor(i/cols)*14;P.text(cx+2,cy+10,p[0],{size:8,color:'#64748b'});P.text(cx+cw*0.36,cy+10,String(p[1]??'-'),{size:8.5,bold:true,maxW:cw*0.62})});y+=rows*14+8};
+  const n=(v,d=2)=>fN(v,d);const dd=I.date.split('-').reverse().join('/');
+  newPage();
+  sect('LINGKUNGAN & LOADER');
+  kv([['Tanggal',dd],['Kode Unit Loader',I.loaderCN],['Lokasi',I.pit],['Model (EGI)',I.loaderEGI],['Cuaca',I.weather],['Bucket (m3)',I.bucket],
+      ['Material',I.material+' (SF '+n(c.sf)+')'],['Mulai - Selesai',c.startMs?fT(c.startMs)+' - '+fT(c.stopMs):'-'],['Jarak angkut (m)',I.distance||'-'],['Jumlah PASS',c.passes],['Observer',I.observer||'-'],['Total waktu (mnt)',n(c.totMin,1)]]);
+  if(I.note){kv([['Catatan',I.note]],1)}
+  // KPI
+  need(52);const kp=[[n(c.pdty,1),'BCM/jam (aktual)'],[n(c.prod,1),'Produksi (BCM)'],[String(c.passes),'Total pass'],[n(c.hT.n,0),'Total ritase']];
+  const kw=(CW-18)/4;kp.forEach((k,i)=>{const x=M+i*(kw+6);P.rect(x,y,kw,40,{fill:'#f1f5f9'});P.text(x+kw/2,y+19,k[0],{size:15,bold:true,align:'c'});P.text(x+kw/2,y+32,k[1],{size:7.5,color:'#64748b',align:'c'})});y+=50;
+  if(c.verdict){const v=c.verdict,cl={under:['#fee2e2','#be123c'],pas:['#dbeafe','#1d4ed8'],over:['#dcfce7','#15803d']}[v.k];need(54);
+    P.rect(M,y,CW,44,{fill:cl[0]});P.text(M+10,y+18,'KETERANGAN: '+v.text,{size:13,bold:true,color:cl[1]});
+    P.text(M+10,y+33,'Aktual '+n(c.pdty,1)+' vs Target '+n(v.target,1)+' BCM/jam ('+(v.gap>=0?'+':'')+n(v.gap,1)+' / '+(v.pct>=0?'+':'')+n(v.pct*100,1)+'%)'+(v.need?'   |   Est. kebutuhan hauler ~'+v.need+' unit (teramati '+v.have+')':''),{size:8,color:cl[1]});y+=54}
+  sect('RINGKASAN LOADER (PLAN vs AKTUAL)');
+  table([{t:'Parameter',w:34},{t:'Unit',w:14},{t:'Plan',w:16,a:'r'},{t:'Aktual',w:16,a:'r'}],[
+    ['Swing (Loaded)','degree',n(+I.angSLplan||null,0),n(+I.angSL||null,0)],['Swing (Empty)','degree',n(+I.angSEplan||null,0),n(+I.angSE||null,0)],
+    ['AVG Passes Per Hauler','pass',n(c.plan.pass),n(c.avgPassHauler)],['AVG Fill Factor','',n(c.plan.ff,3),n(c.avgFF,3)],['AVG Loading Time','menit',n(c.plan.load),n(c.avgLoad)],
+    ['PRODUCTION','BCM',n(c.plan.prod,1),n(c.prod,1)],['EST. PRODUCTIVITY','BCM/jam',n(c.plan.pdty,1),n(c.pdty,1)],['TARGET PRODUKTIVITAS','BCM/jam',n(c.target,1),n(c.pdty,1)],['EST. Fuel Usage','liter',n(c.plan.fuel,1),n(c.fuel,1)],
+    ['EST. Fuel Consumption','liter/jam',n(c.plan.fuelH,1),n(c.fuelH,1)],['EST. Fuel Ratio','liter/BCM',n(c.plan.ratio,3),n(c.ratio,3)]]);
+  sect('AKTIVITAS LOADER');
+  const ar=[];const G=(t,l)=>{ar.push([t,'','','','','','','',''].map((v,i)=>i?'':v));ar[ar.length-1].grp=1;l.forEach(k=>{const r=c.rows.find(x=>x.c===k);ar.push([ACTS[k].n,k,String(r.n),n(r.plan,1),n(r.avg,1),n(r.planMin),n(r.min),fP(r.pctA),{bar:r.pctA}])})};
+  G('PRIMARY WORK',PRIM);G('SECONDARY WORK',SEC);G('NO ACTIVITY',IDLE);
+  ar.push(['TOTAL','',String(c.rows.reduce((t,r)=>t+r.n,0)),'','','',n(c.totMin),'100%','']);
+  table([{t:'Aktivitas',w:30},{t:'Kode',w:8,a:'c'},{t:'Jml',w:7,a:'r'},{t:'Plan s',w:10,a:'r'},{t:'Akt. s',w:10,a:'r'},{t:'Plan mnt',w:11,a:'r'},{t:'Akt. mnt',w:11,a:'r'},{t:'%',w:9,a:'r'},{t:'',w:18}],ar,{rh:14,bold:(r,i)=>ar[i].grp||i===ar.length-1});
+  sect('RINGKASAN HAULER'+(c.dist?'  (jarak '+c.dist+' m)':''));
+  const hr=c.hs.map(h=>[h.cn,h.egi,n(h.cap,1),String(h.n),n(h.avgPass,1),n(h.load),n(h.travel),n(h.wait),n(h.ct),n(h.speed,1),n(h.prod,1)]);
+  hr.push(['TOTAL / AVG','','',String(c.hT.n),n(c.hT.avgPass,1),n(c.hT.load),n(c.hT.travel),n(c.hT.wait),n(c.hT.ct),n(c.hT.speed,1),n(c.hT.prod,1)]);
+  table([{t:'Unit',w:14},{t:'Model',w:12},{t:'Kap.',w:8,a:'r'},{t:'Rit',w:6,a:'r'},{t:'Pass',w:7,a:'r'},{t:'Load',w:8,a:'r'},{t:'Travel',w:8,a:'r'},{t:'Wait',w:8,a:'r'},{t:'CT',w:8,a:'r'},{t:'km/jam',w:9,a:'r'},{t:'BCM',w:9,a:'r'}],hr,{bold:(r,i)=>i===hr.length-1});
+  P.text(M,y+4,'Load/Travel/Wait/CT dalam menit. CT = selisih awal pemuatan rit berurutan; Travel = CT - Load; Speed = jarak/Travel x2.',{size:7,color:'#64748b'});y+=14;
+  // Detail log
+  newPage();sect('RINCIAN DATA OBSERVASI ('+c.segs.length+' baris)');
+  table([{t:'No',w:6,a:'r'},{t:'Jam',w:12},{t:'Hauler',w:14},{t:'Rit',w:6,a:'r'},{t:'Pass',w:6,a:'r'},{t:'Kode',w:7,a:'c'},{t:'Aktivitas',w:30},{t:'FF',w:8,a:'r'},{t:'Durasi (s)',w:11,a:'r'}],
+    c.segs.map((g,i)=>[String(i+1),fT(g.start),(s.haulers[g.h]||{}).cn||'H'+(g.h+1),String(g.rit),String(g.pass),g.act,ACTS[g.act].n,g.ff?n(g.ff,3):'',n(g.dur,1)]),{rh:13});
+  const blob=P.build();
+  if(retBlob)return blob;download(blob,fname('pdf'));toast('PDF diunduh');
+}
+
+/* ============ INIT ============ */
+function wakeLock(){try{navigator.wakeLock&&navigator.wakeLock.request('screen').catch(()=>{})}catch(e){}}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){wakeLock();if(VIEW==='obs')tick()}});
+load();renderHead();
+VIEW=S().segs.length||S().open?'obs':'setup';
+show(VIEW);wakeLock();
+window.__flaz={calc,S:()=>S(),ST:()=>ST,exportXlsx,exportPdf,tapAct,stopAct,undo,newSession,renderAll,buildSheets};
+if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
